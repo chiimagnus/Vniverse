@@ -27,14 +27,25 @@ struct VniverseApp: App {
         }
     }()
 
+    @State private var showSettings = false
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .sheet(isPresented: $showSettings) {
+                    SettingsView()
+                }
         }
         .modelContainer(sharedModelContainer)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 EmptyView()
+            }
+            CommandMenu("设置") {
+                Button("偏好设置...") {
+                    showSettings.toggle()
+                }
+                .keyboardShortcut(",", modifiers: [.command])
             }
         }
     }
