@@ -14,7 +14,11 @@ struct VniverseApp: App {
         let schema = Schema([
             Document.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false, // 持久化存储
+            allowsSave: true
+        )
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -28,5 +32,16 @@ struct VniverseApp: App {
             ContentView()
         }
         .modelContainer(sharedModelContainer)
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                EmptyView()
+            }
+        }
+    }
+    
+    init() {
+        UserDefaults.standard.register(defaults: [
+            "NSQuitAlwaysKeepsWindows": false
+        ])
     }
 }

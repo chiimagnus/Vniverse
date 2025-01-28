@@ -12,25 +12,40 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Document.timestamp, order: .reverse) private var documents: [Document]
-    @State private var selectedDocument: Document?
     @State private var showingFilePicker = false
-    @State private var isEditing = false
+    @SceneStorage("selectedDocumentID") private var selectedDocumentID: String?
     
     var body: some View {
         NavigationSplitView {
-            List(selection: $selectedDocument) {
+            List {
                 ForEach(documents) { document in
-                    NavigationLink(value: document) {
+                    NavigationLink(value: document.id.uuidString) {
                         VStack(alignment: .leading) {
                             Text(document.title)
                                 .font(.headline)
-                            Text(document.path)
+                            Text(document.fileName)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                deleteDocument(document)
+                            } label: {
+                                Label("删除", systemImage: "trash")
+                            }
+                        }
                     }
                 }
-                .onDelete(perform: isEditing ? deleteDocuments : nil)
+            }
+            .navigationDestination(for: String.self) { documentID in
+                Group {
+                    if let document = documents.first(where: { $0.id.uuidString == documentID }) {
+                        DocumentReaderView(document: document)
+                            .id(document.id)
+                    } else {
+                        ContentUnavailableView("文档已删除", systemImage: "trash")
+                    }
+                }
             }
             .navigationTitle("文档")
             .toolbar {
@@ -39,21 +54,20 @@ struct ContentView: View {
                         Label("打开文件", systemImage: "doc.badge.plus")
                     }
                 }
-                
-                ToolbarItem {
-                    Button(action: { isEditing.toggle() }) {
-                        Label(isEditing ? "完成" : "编辑", 
-                              systemImage: isEditing ? "checkmark.circle.fill" : "pencil")
-                    }
-                }
             }
         } detail: {
-            if let document = selectedDocument {
-                DocumentReaderView(document: document)
-                    .id(document.id)
+            if documents.isEmpty {
+                ContentUnavailableView(
+                    "没有文档",
+                    systemImage: "doc.badge.plus",
+                    description: Text("点击工具栏的\"打开文件\"按钮导入文档")
+                )
             } else {
-                Text("选择一个文档开始阅读")
-                    .foregroundStyle(.secondary)
+                ContentUnavailableView(
+                    "选择文档",
+                    systemImage: "doc.text",
+                    description: Text("从左侧列表选择一个文档开始阅读")
+                )
             }
         }
         .navigationSplitViewStyle(.balanced)
@@ -66,15 +80,49 @@ struct ContentView: View {
         }
     }
     
+    private func deleteDocument(_ document: Document) {
+        withAnimation {
+            if document.id.uuidString == selectedDocumentID {
+                selectedDocumentID = nil
+            }
+            cleanupDocumentFiles(document)
+            modelContext.delete(document)
+        }
+    }
+    
+    private func cleanupDocumentFiles(_ document: Document) {
+        let appSupport = try! FileManager.default.url(
+            for: .applicationSupportDirectory, 
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: false
+        )
+        
+        let fileURL = appSupport
+            .appendingPathComponent("Documents")
+            .appendingPathComponent(document.fileName)
+        
+        do {
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                try FileManager.default.removeItem(at: fileURL)
+                print("🗑️ 成功删除沙箱文件: \(document.fileName)")
+            }
+        } catch {
+            print("❌ 沙箱文件删除失败: \(error.localizedDescription)")
+        }
+    }
+    
     private func handleFileImport(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
-            guard let url = urls.first else {
-                print("❌ 没有选择文件")
+            guard let url = urls.first else { return }
+            
+            let fileName = url.lastPathComponent
+            if documents.contains(where: { $0.fileName == fileName }) {
+                print("⚠️ 文档已存在: \(fileName)")
                 return
             }
             
-            // 开始访问文件
             guard url.startAccessingSecurityScopedResource() else {
                 print("❌ 无法访问文件：\(url.path)")
                 return
@@ -88,20 +136,18 @@ struct ContentView: View {
                 let content = try String(contentsOf: url)
                 print("✅ 成功读取文件内容，长度：\(content.count)")
                 
+                let sandboxURL = try saveToSandbox(url: url)
+                
                 let document = Document(
                     title: url.lastPathComponent,
                     content: content,
-                    path: url.path
+                    fileName: sandboxURL.path
                 )
                 
-                // 使用主线程插入数据
                 DispatchQueue.main.async {
                     withAnimation {
                         modelContext.insert(document)
                         print("✅ 成功插入文档：\(document.title)")
-                        
-                        // 自动选择新导入的文档
-                        selectedDocument = document
                     }
                 }
             } catch {
@@ -113,12 +159,30 @@ struct ContentView: View {
         }
     }
     
-    private func deleteDocuments(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(documents[index])
-            }
+    private func saveToSandbox(url: URL) throws -> URL {
+        let fileManager = FileManager.default
+        let appSupport = try fileManager.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        
+        let targetURL = appSupport
+            .appendingPathComponent("Documents")
+            .appendingPathComponent(url.lastPathComponent)
+        
+        try fileManager.createDirectory(
+            at: targetURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        
+        if fileManager.fileExists(atPath: targetURL.path) {
+            try fileManager.removeItem(at: targetURL)
         }
+        
+        try fileManager.copyItem(at: url, to: targetURL)
+        return targetURL
     }
 }
 
