@@ -541,7 +541,7 @@ actor GPTSovits {
     }
     
     // 播放音频数据
-    func play(_ audioData: Data) throws {
+    func play(_ audioData: Data) async throws {
         do {
             audioPlayer = try AVAudioPlayer(data: audioData)
             audioPlayer?.prepareToPlay()
@@ -550,39 +550,35 @@ actor GPTSovits {
                 throw GPTSovitsError.playbackError
             }
             
-            isPlaying = true
-            isPaused = false
+            await updatePlaybackState(playing: true, paused: false)
         } catch {
             throw GPTSovitsError.playbackError
         }
     }
     
     // 暂停播放
-    func pause() {
+    func pause() async {
         audioPlayer?.pause()
-        isPlaying = false
-        isPaused = true
+        await updatePlaybackState(playing: false, paused: true)
     }
     
     // 恢复播放
-    func resume() {
+    func resume() async {
         audioPlayer?.play()
-        isPlaying = true
-        isPaused = false
+        await updatePlaybackState(playing: true, paused: false)
     }
     
     // 停止播放
-    func stop() {
+    func stop() async {
         audioPlayer?.stop()
         streamPlayer?.stop()
-        isPlaying = false
-        isPaused = false
+        await updatePlaybackState(playing: false, paused: false)
     }
     
     // 播放流式音频数据
     func playStream(_ audioStream: AsyncThrowingStream<Data, Error>) async throws {
         // 停止当前播放
-        stop()
+        await stop()
         
         // 创建新的播放器
         streamPlayer = AudioStreamPlayer()
@@ -606,14 +602,17 @@ actor GPTSovits {
                 }
                 
                 totalBytes += chunk.count
-                player.play(chunk)
                 
-                // 不再需要手动等待，AudioStreamPlayer 会处理缓冲和播放时序
+                // 确保播放操作在主线程
+                await MainActor.run {
+                    player.play(chunk)
+                }
             }
             
             print("🟢 音频流接收完成，总共接收：\(totalBytes) 字节")
-            isPlaying = true
-            isPaused = false
+            
+            // 修改状态更新方式
+            await updatePlaybackState(playing: true, paused: false)
             
             // 等待一段时间确保所有音频都播放完成
             try await Task.sleep(nanoseconds: 1_000_000_000)  // 1秒
@@ -622,9 +621,14 @@ actor GPTSovits {
             print("🔴 音频流播放失败：\(error.localizedDescription)")
             streamPlayer?.stop()
             streamPlayer = nil
-            isPlaying = false
-            isPaused = false
+            await updatePlaybackState(playing: false, paused: false)
             throw error
         }
+    }
+    
+    // 在GPTSovits actor中添加状态更新方法
+    private func updatePlaybackState(playing: Bool, paused: Bool) {
+        isPlaying = playing
+        isPaused = paused
     }
 }
