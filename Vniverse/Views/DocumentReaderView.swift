@@ -10,7 +10,8 @@ struct DocumentReaderView: View {
             Text(attributedContent)
                 .padding()
                 .textSelection(.enabled)
-                // 使用 ScrollViewReader 跟踪滚动位置
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .lineSpacing(8) // 增加行间距
                 .background(GeometryReader { geometry in
                     Color.clear.preference(
                         key: ScrollOffsetPreferenceKey.self,
@@ -20,7 +21,6 @@ struct DocumentReaderView: View {
         }
         .coordinateSpace(name: "scroll")
         .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-            // 保存阅读位置
             document.lastPosition = Int(-offset.y)
         }
         .navigationTitle(document.title)
@@ -46,7 +46,6 @@ struct DocumentReaderView: View {
     private func loadContent() {
         attributedContent = MarkdownService.shared.parseMarkdown(document.content)
         
-        // 恢复上次阅读位置
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             withAnimation {
                 scrollPosition.y = CGFloat(-document.lastPosition)
