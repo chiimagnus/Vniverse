@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var documents: [Document]
+    @Query(sort: \Document.timestamp, order: .reverse) private var documents: [Document]
     @State private var selectedDocument: Document?
     @State private var showingFilePicker = false
     @State private var isEditing = false
@@ -20,9 +20,7 @@ struct ContentView: View {
         NavigationSplitView {
             List(selection: $selectedDocument) {
                 ForEach(documents) { document in
-                    NavigationLink {
-                        DocumentReaderView(document: document)
-                    } label: {
+                    NavigationLink(value: document) {
                         VStack(alignment: .leading) {
                             Text(document.title)
                                 .font(.headline)
@@ -52,11 +50,13 @@ struct ContentView: View {
         } detail: {
             if let document = selectedDocument {
                 DocumentReaderView(document: document)
+                    .id(document.id)
             } else {
                 Text("选择一个文档开始阅读")
                     .foregroundStyle(.secondary)
             }
         }
+        .navigationSplitViewStyle(.balanced)
         .fileImporter(
             isPresented: $showingFilePicker,
             allowedContentTypes: [.plainText, UTType(filenameExtension: "md")!],

@@ -34,12 +34,22 @@ struct DocumentReaderView: View {
             }
         }
         .onAppear {
-            attributedContent = MarkdownService.shared.parseMarkdown(document.content)
-            // 恢复上次阅读位置
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                withAnimation {
-                    scrollPosition.y = CGFloat(-document.lastPosition)
-                }
+            print("📖 加载文档：\(document.title)")
+            loadContent()
+        }
+        .onChange(of: document.content) { _, _ in
+            print("📖 文档内容已更新：\(document.title)")
+            loadContent()
+        }
+    }
+    
+    private func loadContent() {
+        attributedContent = MarkdownService.shared.parseMarkdown(document.content)
+        
+        // 恢复上次阅读位置
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation {
+                scrollPosition.y = CGFloat(-document.lastPosition)
             }
         }
     }
