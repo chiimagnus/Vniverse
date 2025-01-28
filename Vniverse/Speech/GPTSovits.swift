@@ -550,35 +550,35 @@ actor GPTSovits {
                 throw GPTSovitsError.playbackError
             }
             
-            await updatePlaybackState(playing: true, paused: false)
+            updatePlaybackState(playing: true, paused: false)
         } catch {
             throw GPTSovitsError.playbackError
         }
     }
     
     // 暂停播放
-    func pause() async {
+    func pause() {
         audioPlayer?.pause()
-        await updatePlaybackState(playing: false, paused: true)
+        updatePlaybackState(playing: false, paused: true)
     }
     
     // 恢复播放
-    func resume() async {
+    func resume() {
         audioPlayer?.play()
-        await updatePlaybackState(playing: true, paused: false)
+        updatePlaybackState(playing: true, paused: false)
     }
     
     // 停止播放
-    func stop() async {
+    func stop() {
         audioPlayer?.stop()
         streamPlayer?.stop()
-        await updatePlaybackState(playing: false, paused: false)
+        updatePlaybackState(playing: false, paused: false)
     }
     
     // 播放流式音频数据
     func playStream(_ audioStream: AsyncThrowingStream<Data, Error>) async throws {
         // 停止当前播放
-        await stop()
+        stop()
         
         // 创建新的播放器
         streamPlayer = AudioStreamPlayer()
@@ -611,8 +611,8 @@ actor GPTSovits {
             
             print("🟢 音频流接收完成，总共接收：\(totalBytes) 字节")
             
-            // 修改状态更新方式
-            await updatePlaybackState(playing: true, paused: false)
+            // 更新状态时直接调用同步方法
+            updatePlaybackState(playing: true, paused: false)
             
             // 等待一段时间确保所有音频都播放完成
             try await Task.sleep(nanoseconds: 1_000_000_000)  // 1秒
@@ -621,12 +621,12 @@ actor GPTSovits {
             print("🔴 音频流播放失败：\(error.localizedDescription)")
             streamPlayer?.stop()
             streamPlayer = nil
-            await updatePlaybackState(playing: false, paused: false)
+            updatePlaybackState(playing: false, paused: false)
             throw error
         }
     }
     
-    // 在GPTSovits actor中添加状态更新方法
+    // 修改状态更新方法为同步
     private func updatePlaybackState(playing: Bool, paused: Bool) {
         isPlaying = playing
         isPaused = paused
