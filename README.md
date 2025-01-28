@@ -25,7 +25,7 @@ Vniverse：GPT-Sovits/Vniverse：GPT-Sovits
 │   └── ContentView.swift          # 主视图容器
 ├── Vniverse_GPT_SovitsApp.swift # 主应用
 ├── Models/
-│   └── Item.swift                 # 文档模型
+│   └── Document.swift                 # 文档模型
 ```
 
 ## 路线图
