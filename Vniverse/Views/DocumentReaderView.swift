@@ -9,13 +9,19 @@ struct DocumentReaderView: View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 8) {
-                    ForEach(document.paragraphs) { paragraph in
-                        Text(paragraph.text)
-                            .id(paragraph.id)
-                            .padding(4)
-                            .background(speechVM.currentParagraph == paragraph.id ? Color.yellow.opacity(0.3) : Color.clear)
-                            .onTapGesture { speechVM.jumpTo(paragraph: paragraph) }
+                    if document.paragraphs.isEmpty {
+                        Text(document.content)
                             .textSelection(.enabled)
+                            .padding(4)
+                    } else {
+                        ForEach(document.paragraphs) { paragraph in
+                            Text(paragraph.text)
+                                .id(paragraph.id)
+                                .padding(4)
+                                .background(speechVM.currentParagraph == paragraph.id ? Color.yellow.opacity(0.3) : Color.clear)
+                                .onTapGesture { speechVM.jumpTo(paragraph: paragraph) }
+                                .textSelection(.enabled)
+                        }
                     }
                 }
                 .padding()

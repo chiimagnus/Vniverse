@@ -8,17 +8,14 @@ final class Document: ObservableObject, Identifiable {
     var title: String
     var content: String {
         didSet {
-            // 当内容更新时自动更新段落
-            paragraphs = content.components(separatedBy: "\n\n").map {
-                DocumentParagraph(text: $0)
-            }
+            initializeParagraphs()
             objectWillChange.send()
         }
     }
     
     // SwiftData暂不支持存储复杂类型数组，改为临时计算属性
     @Transient
-    var paragraphs: [DocumentParagraph] = []
+    private(set) var paragraphs: [DocumentParagraph] = []
     
     var fileName: String  // 只需要存储文件名
     var timestamp: Date
@@ -29,10 +26,7 @@ final class Document: ObservableObject, Identifiable {
         self.content = content
         self.fileName = fileName
         self.timestamp = Date()
-        self.paragraphs = content.components(separatedBy: "\n\n").map {
-            DocumentParagraph(text: $0)
-        }
-        
+        initializeParagraphs()
         print("📄 创建文档：\(title)")
     }
     
@@ -48,6 +42,19 @@ final class Document: ObservableObject, Identifiable {
             .appendingPathComponent("Documents")
             .appendingPathComponent(fileName)
             .path
+    }
+    
+    // 初始化段落
+    private func initializeParagraphs() {
+        paragraphs = content
+            .components(separatedBy: "\n\n")
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .map { DocumentParagraph(text: $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+    }
+    
+    // 在从数据库加载后初始化段落
+    func didAwakeFromFetch() {
+        initializeParagraphs()
     }
 }
 
