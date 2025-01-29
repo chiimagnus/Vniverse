@@ -6,53 +6,52 @@ struct DocumentReaderView: View {
     @State private var showSettings = false
     
     var body: some View {
-        VStack {
-            // 顶部控制栏
-            HStack {
-                // 语音控制按钮
-                Group {
-                    if speechVM.isSynthesizing {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else if speechVM.isPlaying {
-                        Button("暂停") { speechVM.pause() }
-                    } else {
-                        Button("播放") { speechVM.startPlay(document: document) }
+        ScrollViewReader { proxy in
+            ScrollView(.vertical) {
+                LazyVStack(alignment: .leading, spacing: 8) {
+                    ForEach(document.paragraphs) { paragraph in
+                        Text(paragraph.text)
+                            .id(paragraph.id)
+                            .padding(4)
+                            .background(speechVM.currentParagraph == paragraph.id ? Color.yellow.opacity(0.3) : Color.clear)
+                            .onTapGesture { speechVM.jumpTo(paragraph: paragraph) }
+                            .textSelection(.enabled)
                     }
-                    
-                    Button("停止") { speechVM.stop() }
-                        .disabled(!speechVM.isPlaying && !speechVM.isSynthesizing)
                 }
-                .buttonStyle(.bordered)
-                
-                Spacer()
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding()
-            
-            // 文档内容显示
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 8) {
-                        ForEach(document.paragraphs) { paragraph in
-                            Text(paragraph.text)
-                                .id(paragraph.id)
-                                .padding(4)
-                                .background(speechVM.currentParagraph == paragraph.id ? Color.yellow.opacity(0.3) : Color.clear)
-                                .onTapGesture { speechVM.jumpTo(paragraph: paragraph) }
-                        }
-                    }
-                    .padding()
-                }
-                .onChange(of: speechVM.currentParagraph) { _, newValue in
-                    withAnimation {
-                        if let newValue = newValue {
-                            proxy.scrollTo(newValue, anchor: .center)
-                        }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onChange(of: speechVM.currentParagraph) { _, newValue in
+                withAnimation {
+                    if let newValue = newValue {
+                        proxy.scrollTo(newValue, anchor: .center)
                     }
                 }
             }
         }
         .navigationTitle(document.title)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                if speechVM.isSynthesizing {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if speechVM.isPlaying {
+                    Button(action: { speechVM.pause() }) {
+                        Image(systemName: "pause.fill")
+                    }
+                } else {
+                    Button(action: { speechVM.startPlay(document: document) }) {
+                        Image(systemName: "play.fill")
+                    }
+                }
+                
+                Button(action: { speechVM.stop() }) {
+                    Image(systemName: "stop.fill")
+                }
+                .disabled(!speechVM.isPlaying && !speechVM.isSynthesizing)
+            }
+        }
         .onDisappear { speechVM.stop() }
     }
 }
