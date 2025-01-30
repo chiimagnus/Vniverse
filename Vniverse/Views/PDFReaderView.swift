@@ -7,6 +7,7 @@ struct PDFReaderView: View {
     
     var body: some View {
         PDFKitView(pdfView: pdfView)
+            .navigationTitle(document.title)
             .onAppear {
                 if let pdfDocument = PDFDocument(url: URL(fileURLWithPath: document.sandboxPath)) {
                     pdfView.document = pdfDocument
@@ -28,4 +29,4 @@ struct PDFKitView: NSViewRepresentable {
     func updateNSView(_ nsView: PDFView, context: Context) {
         // 更新视图（如果需要）
     }
-} 
+}
