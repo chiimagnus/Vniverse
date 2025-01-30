@@ -13,6 +13,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Document.timestamp, order: .reverse) private var documents: [Document]
     @State private var showingFilePicker = false
+    @State private var selectedFileType: DocumentType = .text
     @SceneStorage("selectedDocumentID") private var selectedDocumentID: String?
     
     var body: some View {
@@ -40,8 +41,14 @@ struct ContentView: View {
             .navigationDestination(for: String.self) { documentID in
                 Group {
                     if let document = documents.first(where: { $0.id.uuidString == documentID }) {
-                        DocumentReaderView(document: document)
-                            .id(document.id)
+                        switch document.fileType {
+                        case .text:
+                            DocumentReaderView(document: document)
+                                .id(document.id)
+                        case .pdf:
+                            PDFReaderView(document: document)
+                                .id(document.id)
+                        }
                     } else {
                         ContentUnavailableView("文档已删除", systemImage: "trash")
                     }
@@ -50,8 +57,17 @@ struct ContentView: View {
             .navigationTitle("文档")
             .toolbar {
                 ToolbarItem {
-                    Button(action: { showingFilePicker = true }) {
-                        Label("打开文件", systemImage: "doc.badge.plus")
+                    Menu {
+                        Button("导入文本文档") {
+                            selectedFileType = .text
+                            showingFilePicker = true
+                        }
+                        Button("导入PDF文档") {
+                            selectedFileType = .pdf
+                            showingFilePicker = true
+                        }
+                    } label: {
+                        Label("导入文档", systemImage: "doc.badge.plus")
                     }
                 }
             }
@@ -60,7 +76,7 @@ struct ContentView: View {
                 ContentUnavailableView(
                     "没有文档",
                     systemImage: "doc.badge.plus",
-                    description: Text("点击工具栏的\"打开文件\"按钮导入文档")
+                    description: Text("点击工具栏的\"导入文档\"按钮导入文档")
                 )
             } else {
                 ContentUnavailableView(
@@ -73,7 +89,7 @@ struct ContentView: View {
         .navigationSplitViewStyle(.balanced)
         .fileImporter(
             isPresented: $showingFilePicker,
-            allowedContentTypes: [.plainText, UTType(filenameExtension: "md")!],
+            allowedContentTypes: selectedFileType.contentTypes,
             allowsMultipleSelection: false
         ) { result in
             handleFileImport(result)
@@ -133,15 +149,20 @@ struct ContentView: View {
             }
             
             do {
-                let content = try String(contentsOf: url)
-                print("✅ 成功读取文件内容，长度：\(content.count)")
-                
                 let sandboxURL = try saveToSandbox(url: url)
+                
+                let content: String
+                if selectedFileType == .text {
+                    content = try String(contentsOf: url)
+                } else {
+                    content = "" // PDF文件不需要读取内容
+                }
                 
                 let document = Document(
                     title: url.lastPathComponent,
                     content: content,
-                    fileName: sandboxURL.path
+                    fileName: sandboxURL.lastPathComponent,
+                    fileType: selectedFileType
                 )
                 
                 DispatchQueue.main.async {
@@ -168,12 +189,11 @@ struct ContentView: View {
             create: true
         )
         
-        let targetURL = appSupport
-            .appendingPathComponent("Documents")
-            .appendingPathComponent(url.lastPathComponent)
+        let documentsDirectory = appSupport.appendingPathComponent("Documents")
+        let targetURL = documentsDirectory.appendingPathComponent(url.lastPathComponent)
         
         try fileManager.createDirectory(
-            at: targetURL.deletingLastPathComponent(),
+            at: documentsDirectory,
             withIntermediateDirectories: true
         )
         
