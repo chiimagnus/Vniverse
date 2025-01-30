@@ -4,7 +4,7 @@ import Combine
 import UniformTypeIdentifiers
 
 // 添加文档类型枚举
-enum DocumentType: Int, Codable {
+enum DocumentType: Int, Codable, CaseIterable {
     case text
     case pdf
     

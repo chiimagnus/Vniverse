@@ -13,8 +13,12 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Document.timestamp, order: .reverse) private var documents: [Document]
     @State private var showingFilePicker = false
-    @State private var selectedFileType: DocumentType = .text
     @SceneStorage("selectedDocumentID") private var selectedDocumentID: String?
+    
+    // 支持的所有文件类型
+    private var supportedTypes: [UTType] {
+        DocumentType.allCases.flatMap { $0.contentTypes }
+    }
     
     var body: some View {
         NavigationSplitView {
@@ -57,16 +61,7 @@ struct ContentView: View {
             .navigationTitle("文档")
             .toolbar {
                 ToolbarItem {
-                    Menu {
-                        Button("导入文本文档") {
-                            selectedFileType = .text
-                            showingFilePicker = true
-                        }
-                        Button("导入PDF文档") {
-                            selectedFileType = .pdf
-                            showingFilePicker = true
-                        }
-                    } label: {
+                    Button(action: { showingFilePicker = true }) {
                         Label("导入文档", systemImage: "doc.badge.plus")
                     }
                 }
@@ -89,8 +84,8 @@ struct ContentView: View {
         .navigationSplitViewStyle(.balanced)
         .fileImporter(
             isPresented: $showingFilePicker,
-            allowedContentTypes: selectedFileType.contentTypes,
-            allowsMultipleSelection: false
+            allowedContentTypes: supportedTypes,
+            allowsMultipleSelection: true
         ) { result in
             handleFileImport(result)
         }
@@ -131,52 +126,59 @@ struct ContentView: View {
     private func handleFileImport(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
-            guard let url = urls.first else { return }
-            
-            let fileName = url.lastPathComponent
-            if documents.contains(where: { $0.fileName == fileName }) {
-                print("⚠️ 文档已存在: \(fileName)")
-                return
+            for url in urls {
+                importFile(from: url)
             }
-            
-            guard url.startAccessingSecurityScopedResource() else {
-                print("❌ 无法访问文件：\(url.path)")
-                return
-            }
-            
-            defer {
-                url.stopAccessingSecurityScopedResource()
-            }
-            
-            do {
-                let sandboxURL = try saveToSandbox(url: url)
-                
-                let content: String
-                if selectedFileType == .text {
-                    content = try String(contentsOf: url)
-                } else {
-                    content = "" // PDF文件不需要读取内容
-                }
-                
-                let document = Document(
-                    title: url.lastPathComponent,
-                    content: content,
-                    fileName: sandboxURL.lastPathComponent,
-                    fileType: selectedFileType
-                )
-                
-                DispatchQueue.main.async {
-                    withAnimation {
-                        modelContext.insert(document)
-                        print("✅ 成功插入文档：\(document.title)")
-                    }
-                }
-            } catch {
-                print("❌ 文件导入错误: \(error.localizedDescription)")
-            }
-            
         case .failure(let error):
             print("❌ 文件选择错误: \(error.localizedDescription)")
+        }
+    }
+    
+    private func importFile(from url: URL) {
+        let fileName = url.lastPathComponent
+        if documents.contains(where: { $0.fileName == fileName }) {
+            print("⚠️ 文档已存在: \(fileName)")
+            return
+        }
+        
+        guard url.startAccessingSecurityScopedResource() else {
+            print("❌ 无法访问文件：\(url.path)")
+            return
+        }
+        
+        defer {
+            url.stopAccessingSecurityScopedResource()
+        }
+        
+        do {
+            let sandboxURL = try saveToSandbox(url: url)
+            
+            // 根据文件扩展名判断类型
+            let ext = url.pathExtension.lowercased()
+            let fileType: DocumentType = ext == "pdf" ? .pdf : .text
+            
+            let content: String
+            if fileType == .text {
+                content = try String(contentsOf: url)
+            } else {
+                content = "" // PDF文件不需要读取内容
+            }
+            
+            let document = Document(
+                title: url.lastPathComponent,
+                content: content,
+                fileName: sandboxURL.lastPathComponent,
+                fileType: fileType
+            )
+            
+            DispatchQueue.main.async {
+                withAnimation {
+                    modelContext.insert(document)
+                    print("✅ 成功插入文档：\(document.title)")
+                }
+            }
+        } catch {
+            print("❌ 文件导入错误: \(error.localizedDescription)")
         }
     }
     
