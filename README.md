@@ -9,8 +9,8 @@
 VoiceUniverse是一款macOS平台的markdown阅读器，能够自然语音文本朗读和自动高亮朗读文本。
 
 ## 1. 功能特点
-- 🎯 朗读文本自动高亮
-- 📍 智能定位当前朗读位置
+- 🎯 [ ] 朗读文本自动高亮
+- 📍 [ ] 智能定位当前朗读位置
 - 🤖 AI语音合成支持，基于 [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) 引擎
 - 📚 支持markdown文档阅读
 - 📚 支持PDF文档阅读
@@ -18,6 +18,9 @@ VoiceUniverse是一款macOS平台的markdown阅读器，能够自然语音文本
 ## 2. 项目结构
 ```
 VoiceUniverse
+├── Utils/
+│   ├── DocumentAudioController.swift # 文档音频控制器
+│   └── AudioPlaybackManager.swift    # 音频播放管理器
 ├── Speech/
 │   └── GPTSovits.swift          # AI语音合成引擎
 ├── Services/
@@ -26,6 +29,7 @@ VoiceUniverse
 │   ├── ContentView.swift         # 主视图（文档列表）
 │   ├── DocumentReaderView.swift  # 文档阅读视图
 │   ├── SettingsView.swift        # 设置视图
+│   ├── PDFReaderView.swift       # PDF阅读视图
 │   └── GPTSovitsSettingView.swift # GPT-SoVITS设置视图
 ├── Models/
 │   └── Document.swift            # 文档数据模型
@@ -78,7 +82,7 @@ VoiceUniverse
 - [ ] 实现阅读进度保存
 
 #### 设置功能完善
-- [ ] 完善SettingsView.swift中的配置选项
+- [x] 添加音频控制配置
 - [ ] 添加朗读偏好设置
 - [ ] 实现配置的保存和加载
 
