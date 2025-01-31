@@ -136,25 +136,15 @@ class SpeechViewModel: ObservableObject {
     
     // 加载保存的参数
     private func loadParams() -> GPTSovitsSynthesisParams {
-        var params = GPTSovitsSynthesisParams()
+        var params = GPTSovitsSynthesisParams.loadFromUserDefaults()
         
-        // 从UserDefaults加载参数（与设置视图相同的逻辑）
-        if let methodRawValue = UserDefaults.standard.string(forKey: "TextSplitMethod"),
-           let method = TextSplitMethod(rawValue: methodRawValue) {
-            params.textSplitMethod = method
+        // 参数验证（保持原有逻辑）
+        do {
+            try params.validate()
+        } catch {
+            print("⚠️ 加载参数验证失败，使用默认值：\(error.localizedDescription)")
+            params = GPTSovitsSynthesisParams()
         }
-        
-        params.batchSize = UserDefaults.standard.integer(forKey: "BatchSize")
-        params.batchThreshold = UserDefaults.standard.double(forKey: "BatchThreshold")
-        params.splitBucket = UserDefaults.standard.bool(forKey: "SplitBucket")
-        params.streamingMode = UserDefaults.standard.bool(forKey: "StreamingMode")
-        params.topK = UserDefaults.standard.integer(forKey: "TopK")
-        params.topP = UserDefaults.standard.double(forKey: "TopP")
-        params.temperature = UserDefaults.standard.double(forKey: "Temperature")
-        params.repetitionPenalty = UserDefaults.standard.double(forKey: "RepetitionPenalty")
-        params.parallelInfer = UserDefaults.standard.bool(forKey: "ParallelInfer")
-        params.speedFactor = UserDefaults.standard.double(forKey: "SpeedFactor")
-        params.fragmentInterval = UserDefaults.standard.double(forKey: "FragmentInterval")
         
         return params
     }

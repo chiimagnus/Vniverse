@@ -37,31 +37,16 @@ struct GPTSovitsSettingView: View {
     // 合成参数
     @State private var params = GPTSovitsSynthesisParams()
     
-    // 保存参数到 UserDefaults
+    // 修改保存参数的方法
     private func saveParams() {
-        print("🔵 保存参数设置到 UserDefaults")
-        UserDefaults.standard.set(params.textSplitMethod.rawValue, forKey: "TextSplitMethod")
-        UserDefaults.standard.set(params.batchSize, forKey: "BatchSize")
-        UserDefaults.standard.set(params.batchThreshold, forKey: "BatchThreshold")
-        UserDefaults.standard.set(params.splitBucket, forKey: "SplitBucket")
-        UserDefaults.standard.set(params.streamingMode, forKey: "StreamingMode")
-        UserDefaults.standard.set(params.topK, forKey: "TopK")
-        UserDefaults.standard.set(params.topP, forKey: "TopP")
-        UserDefaults.standard.set(params.temperature, forKey: "Temperature")
-        UserDefaults.standard.set(params.repetitionPenalty, forKey: "RepetitionPenalty")
-        UserDefaults.standard.set(params.parallelInfer, forKey: "ParallelInfer")
-        UserDefaults.standard.set(params.speedFactor, forKey: "SpeedFactor")
-        UserDefaults.standard.set(params.fragmentInterval, forKey: "FragmentInterval")
-        
-        print("✅ 参数保存完成")
+        params.saveToUserDefaults()
         showSaveSuccess = true
-        
-        // 2秒后隐藏成功提示
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             showSaveSuccess = false
         }
     }
     
+    // 修改初始化方法
     init() {
         print("🔵 初始化设置视图，读取保存的参数")
         // 设置默认测试文本
@@ -72,59 +57,15 @@ struct GPTSovitsSettingView: View {
         _referenceAudioPath = State(initialValue: UserDefaults.standard.string(forKey: "LastReferenceAudioPath"))
         _referenceText = State(initialValue: UserDefaults.standard.string(forKey: "LastReferenceText") ?? "")
         
-        // 读取保存的参数设置
-        var savedParams = GPTSovitsSynthesisParams()
-        
-        // 读取文本切分方法
-        if let methodRawValue = UserDefaults.standard.string(forKey: "TextSplitMethod"),
-           let method = TextSplitMethod(rawValue: methodRawValue) {
-            print("📖 读取到文本切分方法：\(method.description)")
-            savedParams.textSplitMethod = method
-        }
-        
-        // 读取数值参数，使用安全的类型转换
-        if let batchSize = UserDefaults.standard.object(forKey: "BatchSize") as? Int {
-            savedParams.batchSize = batchSize
-        }
-        if let batchThreshold = UserDefaults.standard.object(forKey: "BatchThreshold") as? Double {
-            savedParams.batchThreshold = batchThreshold
-        }
-        if let topK = UserDefaults.standard.object(forKey: "TopK") as? Int {
-            savedParams.topK = topK
-        }
-        if let topP = UserDefaults.standard.object(forKey: "TopP") as? Double {
-            savedParams.topP = topP
-        }
-        if let temperature = UserDefaults.standard.object(forKey: "Temperature") as? Double {
-            savedParams.temperature = temperature
-        }
-        if let repetitionPenalty = UserDefaults.standard.object(forKey: "RepetitionPenalty") as? Double {
-            savedParams.repetitionPenalty = repetitionPenalty
-        }
-        if let speedFactor = UserDefaults.standard.object(forKey: "SpeedFactor") as? Double {
-            savedParams.speedFactor = speedFactor
-        }
-        if let fragmentInterval = UserDefaults.standard.object(forKey: "FragmentInterval") as? Double {
-            savedParams.fragmentInterval = fragmentInterval
-        }
-        
-        // 读取布尔值参数
-        savedParams.splitBucket = UserDefaults.standard.bool(forKey: "SplitBucket")
-        savedParams.streamingMode = UserDefaults.standard.bool(forKey: "StreamingMode")
-        savedParams.parallelInfer = UserDefaults.standard.bool(forKey: "ParallelInfer")
-        
-        print("✅ 参数读取完成")
-        
-        // 验证参数是否在有效范围内
+        // 替换原有参数加载逻辑
+        let savedParams = GPTSovitsSynthesisParams.loadFromUserDefaults()
         do {
             try savedParams.validate()
-            print("✅ 参数验证通过")
+            _params = State(initialValue: savedParams)
         } catch {
             print("⚠️ 参数验证失败，使用默认值：\(error.localizedDescription)")
-            savedParams = GPTSovitsSynthesisParams()
+            _params = State(initialValue: GPTSovitsSynthesisParams())
         }
-        
-        _params = State(initialValue: savedParams)
     }
     
     var body: some View {

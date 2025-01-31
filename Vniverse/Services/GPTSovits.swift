@@ -155,6 +155,52 @@ public struct GPTSovitsSynthesisParams {
             throw GPTSovitsError.invalidParameter("fragment_interval 必须在 \(ParamRanges.fragmentInterval.lowerBound) 到 \(ParamRanges.fragmentInterval.upperBound) 之间")
         }
     }
+    
+    // 统一保存到 UserDefaults
+    func saveToUserDefaults() {
+        print("🔵 保存参数设置到 UserDefaults")
+        UserDefaults.standard.set(textSplitMethod.rawValue, forKey: "TextSplitMethod")
+        UserDefaults.standard.set(batchSize, forKey: "BatchSize")
+        UserDefaults.standard.set(batchThreshold, forKey: "BatchThreshold")
+        UserDefaults.standard.set(splitBucket, forKey: "SplitBucket")
+        UserDefaults.standard.set(streamingMode, forKey: "StreamingMode")
+        UserDefaults.standard.set(topK, forKey: "TopK")
+        UserDefaults.standard.set(topP, forKey: "TopP")
+        UserDefaults.standard.set(temperature, forKey: "Temperature")
+        UserDefaults.standard.set(repetitionPenalty, forKey: "RepetitionPenalty")
+        UserDefaults.standard.set(parallelInfer, forKey: "ParallelInfer")
+        UserDefaults.standard.set(speedFactor, forKey: "SpeedFactor")
+        UserDefaults.standard.set(fragmentInterval, forKey: "FragmentInterval")
+    }
+    
+    // 统一从 UserDefaults 加载
+    static func loadFromUserDefaults() -> GPTSovitsSynthesisParams {
+        print("🔵 从 UserDefaults 加载参数")
+        var params = GPTSovitsSynthesisParams()
+        
+        // 文本切分方法
+        if let methodRawValue = UserDefaults.standard.string(forKey: "TextSplitMethod"),
+           let method = TextSplitMethod(rawValue: methodRawValue) {
+            params.textSplitMethod = method
+        }
+        
+        // 数值参数
+        params.batchSize = UserDefaults.standard.integer(forKey: "BatchSize")
+        params.batchThreshold = UserDefaults.standard.double(forKey: "BatchThreshold")
+        params.topK = UserDefaults.standard.integer(forKey: "TopK")
+        params.topP = UserDefaults.standard.double(forKey: "TopP")
+        params.temperature = UserDefaults.standard.double(forKey: "Temperature")
+        params.repetitionPenalty = UserDefaults.standard.double(forKey: "RepetitionPenalty")
+        params.speedFactor = UserDefaults.standard.double(forKey: "SpeedFactor")
+        params.fragmentInterval = UserDefaults.standard.double(forKey: "FragmentInterval")
+        
+        // 布尔值参数
+        params.splitBucket = UserDefaults.standard.bool(forKey: "SplitBucket")
+        params.streamingMode = UserDefaults.standard.bool(forKey: "StreamingMode")
+        params.parallelInfer = UserDefaults.standard.bool(forKey: "ParallelInfer")
+        
+        return params
+    }
 }
 
 // 音频流播放器
