@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct DocumentReaderView: View {
     @ObservedObject var document: Document
@@ -63,89 +64,46 @@ struct DocumentReaderView: View {
 }
 
 // 新增语音控制视图模型
+@MainActor
 class SpeechViewModel: ObservableObject {
-    @Published var isPlaying = false
-    @Published var isSynthesizing = false
     @Published var currentParagraph: String?
-    private var audioDataCache = Data()
+    private let playbackManager = AudioPlaybackManager.shared
     
-    private var synthesisTask: Task<Void, Never>?
+    @Published private(set) var isPlaying: Bool = false
+    @Published private(set) var isSynthesizing: Bool = false
     
-    // 开始播放文档
+    private var cancellables = Set<AnyCancellable>()
+    
+    init() {
+        playbackManager.$isPlaying
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.isPlaying, on: self)
+            .store(in: &cancellables)
+        
+        playbackManager.$isSynthesizing
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.isSynthesizing, on: self)
+            .store(in: &cancellables)
+    }
+    
     func startPlay(document: Document) {
-        stop()
-        synthesisTask = Task {
-            do {
-                await MainActor.run { isSynthesizing = true }
-                
-                let params = loadParams()
-                let text = document.content
-                
-                let audioStream = try await GPTSovits.shared.synthesizeStream(
-                    text: text,
-                    referenceAudioPath: UserDefaults.standard.string(forKey: "LastReferenceAudioPath"),
-                    promptText: UserDefaults.standard.string(forKey: "LastReferenceText") ?? "",
-                    params: params
-                )
-                
-                try await GPTSovits.shared.playStream(audioStream)
-                await MainActor.run { isPlaying = true }
-            } catch {
-                print("播放失败: \(error.localizedDescription)")
-            }
-            await MainActor.run { 
-                isSynthesizing = false
-                isPlaying = false
-            }
-        }
+        let refPath = UserDefaults.standard.string(forKey: "LastReferenceAudioPath")
+        let promptText = UserDefaults.standard.string(forKey: "LastReferenceText") ?? ""
+        
+        playbackManager.startPlayback(
+            text: document.content,
+            referencePath: refPath,
+            promptText: promptText
+        )
     }
     
-    // 暂停播放
-    func pause() {
-        Task {
-            await GPTSovits.shared.pause()
-            await MainActor.run { isPlaying = false }
-        }
-    }
-    
-    // 恢复播放
-    func resume() {
-        Task {
-            await GPTSovits.shared.resume()
-            await MainActor.run { isPlaying = true }
-        }
-    }
-    
-    // 停止播放
-    func stop() {
-        synthesisTask?.cancel()
-        Task {
-            await GPTSovits.shared.stop()
-            await MainActor.run {
-                isPlaying = false
-                isSynthesizing = false
-            }
-        }
-    }
+    func pause() { playbackManager.pausePlayback() }
+    func resume() { playbackManager.resumePlayback() }
+    func stop() { playbackManager.stopPlayback() }
     
     // 跳转到指定段落
     func jumpTo(paragraph: DocumentParagraph) {
         // 实现段落跳转逻辑
         currentParagraph = paragraph.id
-    }
-    
-    // 加载保存的参数
-    private func loadParams() -> GPTSovitsSynthesisParams {
-        var params = GPTSovitsSynthesisParams.loadFromUserDefaults()
-        
-        // 参数验证（保持原有逻辑）
-        do {
-            try params.validate()
-        } catch {
-            print("⚠️ 加载参数验证失败，使用默认值：\(error.localizedDescription)")
-            params = GPTSovitsSynthesisParams()
-        }
-        
-        return params
     }
 } 

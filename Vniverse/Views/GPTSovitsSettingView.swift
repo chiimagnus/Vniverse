@@ -9,10 +9,8 @@ struct GPTSovitsSettingView: View {
     // 用于实际合成的文本
     @State private var currentText: String = ""
     
-    @State var isPlaying = false  // 改为公共属性
     @State private var errorMessage: String?
     @State private var showError = false
-    @State private var isLoading = false
     @State private var showingFilePicker = false
     @State private var referenceAudioPath: String? {
         didSet {
@@ -36,6 +34,9 @@ struct GPTSovitsSettingView: View {
     
     // 合成参数
     @State private var params = GPTSovitsSynthesisParams()
+    
+    // 在顶部添加新的状态对象
+    @StateObject private var playbackManager = AudioPlaybackManager.shared
     
     // 修改保存参数的方法
     private func saveParams() {
@@ -81,7 +82,7 @@ struct GPTSovitsSettingView: View {
                             }
                         }
                         .buttonStyle(.bordered)
-                        .disabled(isLoading)
+                        .disabled(playbackManager.isSynthesizing)
                         
                         if let path = referenceAudioPath {
                             Text("已选择音频：\(URL(fileURLWithPath: path).lastPathComponent)")
@@ -110,24 +111,32 @@ struct GPTSovitsSettingView: View {
                 
                 HStack(spacing: 20) {
                     Button(action: {
-                        Task {
-                            // 当用户点击播放按钮时，使用输入框的文本
-                            currentText = inputText
-                            await synthesizeAndPlay()
+                        Task { @MainActor in  // 确保在主线程执行
+                            if playbackManager.isPlaying {
+                                playbackManager.stopPlayback()
+                            } else {
+                                let refPath = UserDefaults.standard.string(forKey: "LastReferenceAudioPath")
+                                let promptText = UserDefaults.standard.string(forKey: "LastReferenceText") ?? ""
+                                playbackManager.startPlayback(
+                                    text: inputText,
+                                    referencePath: refPath,
+                                    promptText: promptText
+                                )
+                            }
                         }
                     }) {
                         HStack {
-                            if isLoading {
+                            if playbackManager.isSynthesizing {
                                 ProgressView()
                                     .scaleEffect(0.8)
                                     .frame(width: 16, height: 16)
                             } else {
-                                Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                                Image(systemName: playbackManager.isPlaying ? "stop.fill" : "play.fill")
                             }
-                            Text(isPlaying ? "停止" : "播放")
+                            Text(playbackManager.isPlaying ? "停止" : "播放")
                         }
                     }
-                    .disabled(isLoading || referenceAudioPath == nil || referenceText.isEmpty)
+                    .disabled(playbackManager.isSynthesizing || referenceAudioPath == nil || referenceText.isEmpty)
                 }
             }
             
@@ -262,139 +271,13 @@ struct GPTSovitsSettingView: View {
                 showError = true
             }
         }
-    }
-    
-    // 公共接口，供 SpeechManager 调用
-    func synthesizeAndPlay(text: String) async {
-        print("🟣 准备合成文本（来自 SpeechManager）：\(text)")
-        // 更新当前要合成的文本
-        currentText = text
-        // 直接调用内部合成方法，传入要使用的文本
-        await synthesizeAndPlayInternal(text: text)
-    }
-    
-    func stop() async {
-        if isPlaying {
-            await GPTSovits.shared.stop()
-            isPlaying = false
-            onPlayingStateChanged?(false)  // 通知状态变化
-        }
-    }
-    
-    func pause() async {
-        if isPlaying {
-            await GPTSovits.shared.pause()
-            isPlaying = false
-            onPlayingStateChanged?(false)  // 通知状态变化
-        }
-    }
-    
-    func resume() async {
-        if !isPlaying {
-            await GPTSovits.shared.resume()
-            isPlaying = true
-            onPlayingStateChanged?(true)  // 通知状态变化
-        }
-    }
-    
-    private func synthesizeAndPlay() async {
-        print("🟣 准备合成文本（来自界面）：\(inputText)")
-        // 当从界面调用时，使用输入框的文本
-        await synthesizeAndPlayInternal(text: inputText)
-    }
-    
-    // 内部实际执行合成的方法
-    private func synthesizeAndPlayInternal(text: String) async {
-        // 1. 首先打印开始处理的日志
-        print("🟣 开始处理文本：\(text)")
-        
-        if isPlaying {
-            print("⏹️ 停止当前播放")
-            await GPTSovits.shared.stop()
-            isPlaying = false
-            onPlayingStateChanged?(false)
-            return
-        }
-        
-        guard let refPath = referenceAudioPath else {
-            print("❌ 未设置参考音频")
-            errorMessage = "请先选择参考音频文件"
-            showError = true
-            return
-        }
-        
-        if referenceText.isEmpty {
-            print("❌ 未设置参考文本")
-            errorMessage = "请输入参考音频的文本内容"
-            showError = true
-            return
-        }
-        
-        isLoading = true
-        do {
-            if params.streamingMode {
-                // 2. 开始合成
-                print("🎵 开始流式合成...")
-                let audioStream = try await GPTSovits.shared.synthesizeStream(
-                    text: text,
-                    referenceAudioPath: refPath,
-                    promptText: referenceText,
-                    params: params
-                )
-                print("✨ 合成完成，准备播放")
-                
-                // 3. 开始播放
-                print("▶️ 开始播放音频流")
-                isPlaying = true
-                onPlayingStateChanged?(true)
-                
-                // 4. 等待播放完成
-                try await GPTSovits.shared.playStream(audioStream)
-                print("✅ 音频播放完成")
-                
-                // 5. 播放完成，更新状态
-                isPlaying = false
-                onPlayingStateChanged?(false)
-                
-                // 6. 触发完成回调
-                onFinishSpeaking?()
-            } else {
-                // 2. 开始合成
-                print("🎵 开始普通合成...")
-                let audioData = try await GPTSovits.shared.synthesize(
-                    text: text,
-                    referenceAudioPath: refPath,
-                    promptText: referenceText,
-                    params: params
-                )
-                print("✨ 合成完成，准备播放")
-                
-                // 3. 开始播放
-                print("▶️ 开始播放音频")
-                isPlaying = true
-                onPlayingStateChanged?(true)
-                
-                // 4. 等待播放完成
-                try await GPTSovits.shared.play(audioData)
-                print("✅ 音频播放完成")
-                
-                // 5. 播放完成，更新状态
-                isPlaying = false
-                onPlayingStateChanged?(false)
-                
-                // 6. 触发完成回调
-                onFinishSpeaking?()
+        // 修改错误处理（可选）
+        .onReceive(playbackManager.$errorMessage) { message in
+            if let message = message {
+                errorMessage = message
+                showError = true
             }
-        } catch {
-            print("❌ 播放失败：\(error.localizedDescription)")
-            errorMessage = error.localizedDescription
-            showError = true
-            isPlaying = false
-            onPlayingStateChanged?(false)
-            // 出错时也触发完成回调
-            onFinishSpeaking?()
         }
-        isLoading = false
     }
 }
 
