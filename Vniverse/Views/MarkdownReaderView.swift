@@ -47,24 +47,11 @@ struct MarkdownReaderView: View {
     }
     
     private var audioControlToolbar: some View {
-        HStack {
-            if audioController.isSynthesizing {
-                synthesisProgressView
-            } else {
-                playPauseButton
-            }
-            stopButton
-        }
-    }
-    
-    private var synthesisProgressView: some View {
-        ProgressView()
-            .controlSize(.small)
-    }
-    
-    private var playPauseButton: some View {
         Group {
-            if audioController.isPlaying {
+            if audioController.isSynthesizing {
+                ProgressView()
+                    .controlSize(.small)
+            } else if audioController.isPlaying {
                 Button(action: { audioController.pause() }) {
                     Image(systemName: "pause.fill")
                 }
@@ -73,14 +60,12 @@ struct MarkdownReaderView: View {
                     Image(systemName: "play.fill")
                 }
             }
+            
+            Button(action: { audioController.stop() }) {
+                Image(systemName: "stop.fill")
+            }
+            .disabled(!audioController.isPlaying && !audioController.isSynthesizing)
         }
-    }
-    
-    private var stopButton: some View {
-        Button(action: { audioController.stop() }) {
-            Image(systemName: "stop.fill")
-        }
-        .disabled(!audioController.isPlaying && !audioController.isSynthesizing)
     }
     
     private func startPlayback() {
