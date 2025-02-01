@@ -110,19 +110,16 @@ struct GPTSovitsSettingView: View {
                     .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.2)))
                 
                 HStack(spacing: 20) {
+                    // 播放/暂停按钮
                     Button(action: {
-                        Task { @MainActor in  // 确保在主线程执行
-                            if playbackManager.isPlaying {
-                                playbackManager.stopPlayback()
-                            } else {
-                                let refPath = UserDefaults.standard.string(forKey: "LastReferenceAudioPath")
-                                let promptText = UserDefaults.standard.string(forKey: "LastReferenceText") ?? ""
-                                playbackManager.startPlayback(
-                                    text: inputText,
-                                    referencePath: refPath,
-                                    promptText: promptText
-                                )
-                            }
+                        Task { @MainActor in
+                            let refPath = UserDefaults.standard.string(forKey: "LastReferenceAudioPath")
+                            let promptText = UserDefaults.standard.string(forKey: "LastReferenceText") ?? ""
+                            playbackManager.startPlayback(
+                                text: inputText,
+                                referencePath: refPath,
+                                promptText: promptText
+                            )
                         }
                     }) {
                         HStack {
@@ -131,12 +128,25 @@ struct GPTSovitsSettingView: View {
                                     .scaleEffect(0.8)
                                     .frame(width: 16, height: 16)
                             } else {
-                                Image(systemName: playbackManager.isPlaying ? "stop.fill" : "play.fill")
+                                Image(systemName: "play.fill")
                             }
-                            Text(playbackManager.isPlaying ? "停止" : "播放")
+                            Text("播放")
                         }
                     }
-                    .disabled(playbackManager.isSynthesizing || referenceAudioPath == nil || referenceText.isEmpty)
+                    .disabled(playbackManager.isSynthesizing || playbackManager.isPlaying || referenceAudioPath == nil || referenceText.isEmpty)
+                    
+                    // 新增的停止按钮
+                    Button(action: {
+                        Task { @MainActor in
+                            playbackManager.stopPlayback()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "stop.fill")
+                            Text("停止")
+                        }
+                    }
+                    .disabled(!playbackManager.isPlaying && !playbackManager.isSynthesizing)
                 }
             }
             
