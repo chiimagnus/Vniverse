@@ -47,7 +47,7 @@ struct ContentView: View {
                     if let document = documents.first(where: { $0.id.uuidString == documentID }) {
                         switch document.fileType {
                         case .text:
-                            DocumentReaderView(document: document)
+                            MarkdownReaderView(document: document)
                                 .id(document.id)
                         case .pdf:
                             PDFReaderView(document: document)

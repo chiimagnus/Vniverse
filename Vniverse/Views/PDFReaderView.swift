@@ -3,7 +3,7 @@ import PDFKit
 
 struct PDFReaderView: View {
     let document: Document
-    @StateObject private var audioController = DocumentAudioController()
+    @StateObject private var audioController = AudioController()
     @State private var pdfView = PDFView()
     @State private var showError = false
     @State private var errorMessage: String?

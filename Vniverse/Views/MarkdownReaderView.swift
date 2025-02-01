@@ -1,9 +1,9 @@
 import SwiftUI
 import Combine
 
-struct DocumentReaderView: View {
+struct MarkdownReaderView: View {
     @ObservedObject var document: Document
-    @StateObject private var audioController = DocumentAudioController()
+    @StateObject private var audioController = AudioController()
     @State private var showSettings = false
     
     var body: some View {

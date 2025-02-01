@@ -2,7 +2,7 @@ import Combine
 import Foundation
 
 @MainActor
-class DocumentAudioController: ObservableObject {
+class AudioController: ObservableObject {
     // 播放状态
     @Published var isPlaying = false
     @Published var isSynthesizing = false

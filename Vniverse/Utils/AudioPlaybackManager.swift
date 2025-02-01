@@ -97,7 +97,7 @@ class AudioPlaybackManager: ObservableObject {
                 showAlert(title: "播放错误", message: error.localizedDescription)
             }
         } else {
-            showAlert(title: "发生错误", message: error.localizedDescription)
+            // showAlert(title: "发生错误", message: error.localizedDescription)
         }
     }
     
