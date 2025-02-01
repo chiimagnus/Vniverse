@@ -21,9 +21,8 @@ VoiceUniverse
 ├── Utils/
 │   ├── AudioController.swift # 文档音频控制器
 │   └── AudioPlaybackManager.swift    # 音频播放管理器
-├── Speech/
-│   └── GPTSovits.swift          # AI语音合成引擎
 ├── Services/
+│   ├── GPTSovits.swift          # AI语音合成引擎
 │   └── MarkdownService.swift     # Markdown解析服务
 ├── Views/
 │   ├── ContentView.swift         # 主视图（文档列表）
