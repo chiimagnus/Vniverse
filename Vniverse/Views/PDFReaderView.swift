@@ -64,7 +64,7 @@ struct PDFReaderView: View {
         
         pdfView.document = pdfDocument
         pdfView.autoScales = true
-        pdfView.displayMode = .singlePage
+        pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = .vertical
     }
     
