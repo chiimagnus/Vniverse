@@ -59,6 +59,11 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("文档")
+            .navigationSplitViewColumnWidth(
+                min: 200, 
+                ideal: 250, 
+                max: 300
+            )
             .toolbar {
                 ToolbarItem {
                     Button(action: { showingFilePicker = true }) {
