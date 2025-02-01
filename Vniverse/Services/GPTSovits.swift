@@ -544,11 +544,15 @@ actor GPTSovits {
         
         print("🔵 准备发送流式合成请求：\(url)")
         
-        // 创建一个异步流
+        // 添加取消处理
         return AsyncThrowingStream { continuation in
-            Task {
+            let task = Task {
                 do {
+                    // 使用withTaskCancellationHandler处理取消
                     let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                    
+                    // 检查父任务是否已取消
+                    try Task.checkCancellation()
                     
                     guard let httpResponse = response as? HTTPURLResponse else {
                         throw GPTSovitsError.serverNotAvailable
@@ -564,6 +568,8 @@ actor GPTSovits {
                     let chunkSize = 4096  // 设置合适的缓冲区大小
                     
                     for try await byte in bytes {
+                        // 每次循环检查是否取消
+                        try Task.checkCancellation()
                         buffer.append(byte)
                         
                         // 当缓冲区达到指定大小时发送数据
@@ -580,8 +586,18 @@ actor GPTSovits {
                     
                     continuation.finish()
                 } catch {
-                    continuation.finish(throwing: error)
+                    // 处理取消错误
+                    if error is CancellationError {
+                        continuation.finish(throwing: GPTSovitsError.synthesisError("合成已取消"))
+                    } else {
+                        continuation.finish(throwing: error)
+                    }
                 }
+            }
+            
+            // 注册取消处理程序
+            continuation.onTermination = { @Sendable _ in
+                task.cancel()
             }
         }
     }

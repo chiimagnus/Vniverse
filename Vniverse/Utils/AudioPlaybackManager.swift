@@ -75,12 +75,19 @@ class AudioPlaybackManager: ObservableObject {
     
     /// 停止播放
     func stopPlayback() {
+        // 先取消任务再停止播放
         synthesisTask?.cancel()
+        synthesisTask = nil // 清除任务引用
+        
         Task {
+            // 强制停止底层播放器
             await GPTSovits.shared.stop()
-            isPlaying = false
-            isSynthesizing = false
-            currentProgress = 0.0
+            // 确保状态更新在主线程
+            await MainActor.run {
+                isPlaying = false
+                isSynthesizing = false
+                currentProgress = 0.0
+            }
         }
     }
     
