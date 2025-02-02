@@ -15,6 +15,7 @@ struct PDFReaderView: View {
         }
         .onAppear {
             loadPDFDocument()
+            setupScrollObserver()
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
@@ -66,6 +67,39 @@ struct PDFReaderView: View {
         pdfView.autoScales = true
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = .vertical
+        
+        // 恢复阅读位置
+        if let position = document.lastReadPosition {
+            restorePDFPosition(position)
+        }
+    }
+    
+    private func setupScrollObserver() {
+        NotificationCenter.default.addObserver(forName: .PDFViewPageChanged, 
+                                              object: pdfView, 
+                                               queue: .main) { _ in
+            saveCurrentPosition()
+        }
+    }
+    
+    private func saveCurrentPosition() {
+        guard let page = pdfView.currentPage,
+              let pageIndex = pdfView.document?.index(for: page) else { return }
+        
+        let visibleRect = pdfView.convert(pdfView.bounds, to: page)
+        let position = "\(pageIndex):\(visibleRect.minY)"
+        document.saveReadingPosition(position)
+    }
+    
+    private func restorePDFPosition(_ position: String) {
+        let components = position.components(separatedBy: ":")
+        guard components.count == 2,
+              let pageIndex = Int(components[0]),
+              let yPosition = CGFloat(components[1]),
+              let page = pdfView.document?.page(at: pageIndex) else { return }
+        
+        let rect = CGRect(x: 0, y: yPosition, width: page.bounds(for: .cropBox).width, height: 0)
+        pdfView.go(to: rect, on: page)
     }
     
     private func startPlayback() {

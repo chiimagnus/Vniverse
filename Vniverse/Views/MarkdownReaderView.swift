@@ -33,7 +33,13 @@ struct MarkdownReaderView: View {
                 withAnimation {
                     if let newValue = newValue {
                         proxy.scrollTo(newValue, anchor: .center)
+                        document.saveReadingPosition(newValue)
                     }
+                }
+            }
+            .onAppear {
+                if let lastPosition = document.lastReadPosition {
+                    proxy.scrollTo(lastPosition, anchor: .center)
                 }
             }
         }

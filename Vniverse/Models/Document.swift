@@ -46,6 +46,10 @@ final class Document: ObservableObject, Identifiable {
     var timestamp: Date
     var fileType: DocumentType = DocumentType.text // 使用完整的类型名称
     
+    // 新增阅读位置属性
+    var lastReadPosition: String?  // 存储位置标识（Markdown用段落ID，PDF用页面索引+位置）
+    var lastReadTimestamp: Date?   // 最后阅读时间
+    
     init(id: UUID = UUID(), title: String, content: String = "", fileName: String, fileType: DocumentType? = nil) {
         self.id = id
         self.title = title
@@ -61,6 +65,7 @@ final class Document: ObservableObject, Identifiable {
         }
         initializeParagraphs()
         print("📄 创建文档：\(title)")
+        self.lastReadTimestamp = Date()
     }
     
     // 在从数据库加载后初始化
@@ -100,6 +105,13 @@ final class Document: ObservableObject, Identifiable {
         } else {
             paragraphs = []
         }
+    }
+    
+    // 新增位置保存方法
+    func saveReadingPosition(_ position: String) {
+        self.lastReadPosition = position
+        self.lastReadTimestamp = Date()
+        objectWillChange.send()
     }
 }
 
