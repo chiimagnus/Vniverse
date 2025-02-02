@@ -75,9 +75,11 @@ struct PDFReaderView: View {
     }
     
     private func setupScrollObserver() {
-        NotificationCenter.default.addObserver(forName: .PDFViewPageChanged, 
-                                              object: pdfView, 
-                                               queue: .main) { _ in
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name.PDFViewPageChanged,
+            object: pdfView,
+            queue: .main
+        ) { _ in
             saveCurrentPosition()
         }
     }
@@ -95,10 +97,13 @@ struct PDFReaderView: View {
         let components = position.components(separatedBy: ":")
         guard components.count == 2,
               let pageIndex = Int(components[0]),
-              let yPosition = CGFloat(components[1]),
+              let yPosition = Double(components[1]),
               let page = pdfView.document?.page(at: pageIndex) else { return }
         
-        let rect = CGRect(x: 0, y: yPosition, width: page.bounds(for: .cropBox).width, height: 0)
+        let rect = CGRect(x: 0, 
+                         y: CGFloat(yPosition),
+                         width: page.bounds(for: .cropBox).width, 
+                         height: 0)
         pdfView.go(to: rect, on: page)
     }
     
