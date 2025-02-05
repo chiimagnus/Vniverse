@@ -98,10 +98,13 @@ final class Document: ObservableObject, Identifiable {
     private func initializeParagraphs() {
         // 只有文本文档才需要初始化段落
         if fileType == .text {
-            paragraphs = content
-                .components(separatedBy: "\n\n")
-                .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                .map { DocumentParagraph(text: $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            let rawParagraphs = content.components(separatedBy: "\n\n")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            // 使用稳定的索引作为 id
+            paragraphs = rawParagraphs.enumerated().map { index, paragraph in
+                DocumentParagraph(id: "\(index)", text: paragraph)
+            }
         } else {
             paragraphs = []
         }
@@ -128,6 +131,6 @@ extension ModelContext {
 
 // 添加DocumentParagraph结构体
 struct DocumentParagraph: Identifiable {
-    let id = UUID().uuidString
+    let id: String
     let text: String
 } 
