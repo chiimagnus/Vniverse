@@ -3,85 +3,110 @@ import Combine
 import SwiftData
 import AppKit
 
+// 自定义包装的 OffsetScrollView，用于跟踪和控制滚动位置
+struct OffsetScrollView<Content: View>: NSViewRepresentable {
+    @Binding var offset: CGFloat   // 当前滚动偏移量（单位：像素）
+    let content: Content
+    
+    init(offset: Binding<CGFloat>, @ViewBuilder content: () -> Content) {
+        self._offset = offset
+        self.content = content()
+    }
+    
+    class Coordinator: NSObject {
+        var offset: Binding<CGFloat>
+        var isSettingOffset = false
+        
+        init(offset: Binding<CGFloat>) {
+            self.offset = offset
+            super.init()
+        }
+        
+        // 监听 NSClipView 的 bounds 变化（滚动时会触发）
+        @objc func boundsDidChange(notification: Notification) {
+            guard !isSettingOffset else { return }
+            if let clipView = notification.object as? NSClipView {
+                let newOffset = clipView.bounds.origin.y
+                print("滚动位置更新：\(newOffset)")
+                offset.wrappedValue = newOffset
+            }
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(offset: $offset)
+    }
+    
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.drawsBackground = false
+        
+        // 初始化 NSHostingView 来展示 SwiftUI 内容
+        let hostingView = NSHostingView(rootView: content)
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.documentView = hostingView
+        
+        // 让 hostingView 的宽度匹配 ScrollView 的宽度
+        NSLayoutConstraint.activate([
+            hostingView.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: scrollView.contentView.trailingAnchor),
+            hostingView.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor),
+            hostingView.widthAnchor.constraint(equalTo: scrollView.contentView.widthAnchor)
+        ])
+        
+        // 允许 contentView 发送 bounds 变化的通知
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(Coordinator.boundsDidChange),
+            name: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView
+        )
+        
+        return scrollView
+    }
+    
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        // 更新显示内容
+        if let hostingView = scrollView.documentView as? NSHostingView<Content> {
+            hostingView.rootView = content
+        }
+        
+        // 如果当前实际滚动位置与绑定的 offset 差异较大，则调整滚动
+        let currentOffset = scrollView.contentView.bounds.origin.y
+        if abs(currentOffset - offset) > 1.0 {
+            context.coordinator.isSettingOffset = true
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: offset))
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+            context.coordinator.isSettingOffset = false
+            print("程序设置滚动位置：\(offset)")
+        }
+    }
+}
+
 struct MarkdownReaderView: View {
     @ObservedObject var document: Document
     @StateObject private var audioController = AudioController()
     @State private var showSettings = false
     @Environment(\.modelContext) private var modelContext
-    @State private var currentVisibleParagraphID: String?
+    @State private var scrollOffset: CGFloat = 0
     
     var body: some View {
-        GeometryReader { containerGeometry in
-            let centerY = containerGeometry.size.height / 2
-            ScrollViewReader { proxy in
-                ScrollView(.vertical) {
-                    LazyVStack(alignment: .leading, spacing: 8) {
-                        if document.paragraphs.isEmpty {
-                            Text(document.content)
-                                .textSelection(.enabled)
-                                .padding(4)
-                                .id("single_content")  // 为单一内容添加ID
-                                .background {
-                                    GeometryReader { geometry in
-                                        Color.clear.preference(
-                                            key: ScrollOffsetPreferenceKey.self,
-                                            value: [ScrollOffsetData(id: "single_content", rect: geometry.frame(in: .named("scroll")))]
-                                        )
-                                    }
-                                }
-                        } else {
-                            ForEach(document.paragraphs) { paragraph in
-                                Text(paragraph.text)
-                                    .id(paragraph.id)
-                                    .padding(4)
-                                    .background(audioController.currentParagraph == paragraph.id ? Color.yellow.opacity(0.3) : Color.clear)
-                                    .onTapGesture { audioController.jumpTo(paragraph: paragraph) }
-                                    .textSelection(.enabled)
-                                    .background {
-                                        GeometryReader { geometry in
-                                            Color.clear.preference(
-                                                key: ScrollOffsetPreferenceKey.self,
-                                                value: [ScrollOffsetData(id: paragraph.id, rect: geometry.frame(in: .named("scroll")))]
-                                            )
-                                        }
-                                    }
-                            }
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .coordinateSpace(name: "scroll")
-                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { data in
-                    // 使用外层 GeometryReader 计算得到的 centerY
-                    if let closestParagraph = data.min(by: { abs($0.rect.midY - centerY) < abs($1.rect.midY - centerY) }) {
-                        if currentVisibleParagraphID != closestParagraph.id {
-                            currentVisibleParagraphID = closestParagraph.id
-                            document.saveReadingPosition(closestParagraph.id)
-                            modelContext.saveContext()
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onChange(of: audioController.currentParagraph) { _, newValue in
-                    withAnimation {
-                        if let newValue = newValue {
-                            proxy.scrollTo(newValue, anchor: .center)
-                            document.saveReadingPosition(newValue)
-                            modelContext.saveContext()
-                        }
-                    }
-                }
-                .onAppear {
-                    if let lastPosition = document.lastReadPosition {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            withAnimation {
-                                proxy.scrollTo(lastPosition, anchor: .center)
-                            }
-                        }
-                    }
-                }
+        OffsetScrollView(offset: $scrollOffset) {
+            LazyVStack(alignment: .leading, spacing: 8) {
+                Text(document.content)
+                    .textSelection(.enabled)
+                    .padding(4)
             }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .onChange(of: scrollOffset) { _, newValue in
+            let positionString = String(format: "%.1f", newValue)
+            print("保存滚动位置：\(positionString)")
+            document.saveReadingPosition(positionString)
+            try? modelContext.save()
         }
         .navigationTitle(document.title)
         .toolbar {
@@ -89,12 +114,25 @@ struct MarkdownReaderView: View {
                 audioControlToolbar
             }
         }
+        .onAppear {
+            print("视图出现，文档标题：\(document.title)")
+            print("上次阅读位置：\(document.lastReadPosition ?? "无")")
+            
+            if let lastPosition = document.lastReadPosition,
+               let offset = Double(lastPosition) {
+                print("尝试恢复到位置：\(offset)")
+                // 延迟设置初始滚动位置
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    scrollOffset = CGFloat(offset)
+                }
+            }
+        }
         .onDisappear {
             audioController.stop()
-            if let currentID = currentVisibleParagraphID {
-                document.saveReadingPosition(currentID)
-                modelContext.saveContext()
-            }
+            let positionString = String(format: "%.1f", scrollOffset)
+            print("视图消失，保存最终位置：\(positionString)")
+            document.saveReadingPosition(positionString)
+            try? modelContext.save()
         }
     }
     
@@ -122,19 +160,5 @@ struct MarkdownReaderView: View {
     
     private func startPlayback() {
         audioController.playDocument(content: document.content)
-    }
-}
-
-// 添加用于跟踪滚动位置的辅助类型
-struct ScrollOffsetData: Equatable {
-    let id: String
-    let rect: CGRect
-}
-
-struct ScrollOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: [ScrollOffsetData] = []
-    
-    static func reduce(value: inout [ScrollOffsetData], nextValue: () -> [ScrollOffsetData]) {
-        value.append(contentsOf: nextValue())
     }
 } 
