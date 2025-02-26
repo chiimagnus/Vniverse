@@ -1,10 +1,3 @@
-//
-//  JsonReaderView.swift
-//  Vniverse
-//
-//  Created by chii_magnus on 2025/2/26.
-//
-
 import SwiftUI
 
 struct JsonReaderView: View {
@@ -32,7 +25,3 @@ struct JsonReaderView: View {
         .navigationTitle(document.title)
     }
 }
-//
-//#Preview {
-//    JsonReaderView()
-//}
