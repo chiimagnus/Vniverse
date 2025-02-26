@@ -14,6 +14,8 @@ VoiceUniverse是一款macOS平台的markdown阅读器，能够自然语音文本
 - 🤖 AI语音合成支持，基于 [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) 引擎
 - 📚 支持markdown文档阅读
 - 📚 支持PDF文档阅读
+- 📚 支持json聊天记录，并且目前只支持 [ChatHistoryBoxChromePlugin](https://github.com/chiimagnus/ChatHistoryBoxChromePlugin) 插件导出的json文件
+
 
 ## 2. 项目结构
 ```
