@@ -26,9 +26,10 @@ VoiceUniverse
 │   └── MarkdownService.swift     # Markdown解析服务
 ├── Views/
 │   ├── ContentView.swift         # 主视图（文档列表）
-│   ├── MarkdownReaderView.swift  # 文档阅读视图
-│   ├── SettingsView.swift        # 设置视图
+│   ├── MarkdownReaderView.swift  # Markdown阅读视图
 │   ├── PDFReaderView.swift       # PDF阅读视图
+│   ├── JsonReaderView.swift     # Json阅读视图
+│   ├── SettingsView.swift        # 设置视图
 │   └── GPTSovitsSettingView.swift # GPT-SoVITS设置视图
 ├── Models/
 │   └── Document.swift            # 文档数据模型

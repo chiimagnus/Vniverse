@@ -52,6 +52,9 @@ struct ContentView: View {
                         case .pdf:
                             PDFReaderView(document: document)
                                 .id(document.id)
+                        case .json:
+                            JsonReaderView(document: document)
+                                .id(document.id)
                         }
                     } else {
                         ContentUnavailableView("文档已删除", systemImage: "trash")
@@ -160,10 +163,17 @@ struct ContentView: View {
             
             // 根据文件扩展名判断类型
             let ext = url.pathExtension.lowercased()
-            let fileType: DocumentType = ext == "pdf" ? .pdf : .text
+//            let fileType: DocumentType = ext == "pdf" ? .pdf : ext == "json" ? .json : .text
+            let fileType: DocumentType = switch ext {
+                case "pdf": .pdf
+                case "json": .json
+                default: .text
+            }
             
             let content: String
             if fileType == .text {
+                content = try String(contentsOf: url)
+            } else if fileType == .json {
                 content = try String(contentsOf: url)
             } else {
                 content = "" // PDF文件不需要读取内容

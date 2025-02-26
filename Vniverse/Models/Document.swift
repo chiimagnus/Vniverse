@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 enum DocumentType: Int, Codable, CaseIterable {
     case text
     case pdf
+    case json
     
     var fileExtensions: [String] {
         switch self {
@@ -14,6 +15,8 @@ enum DocumentType: Int, Codable, CaseIterable {
             return ["txt", "md"]
         case .pdf:
             return ["pdf"]
+        case .json:
+            return ["json"]
         }
     }
     
@@ -23,6 +26,8 @@ enum DocumentType: Int, Codable, CaseIterable {
             return [.plainText, UTType(filenameExtension: "md")!]
         case .pdf:
             return [.pdf]
+        case .json:
+            return [.json]
         }
     }
 }
@@ -61,7 +66,13 @@ final class Document: ObservableObject, Identifiable {
             self.fileType = specifiedType
         } else {
             let ext = (fileName as NSString).pathExtension.lowercased()
-            self.fileType = ext == "pdf" ? .pdf : .text
+            self.fileType = {
+                switch ext {
+                case "pdf": return .pdf
+                case "json": return .json
+                default: return .text
+                }
+            }()
         }
         initializeParagraphs()
         print("📄 创建文档：\(title)")
