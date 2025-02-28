@@ -10,7 +10,7 @@ struct Message: Identifiable {
     let id: String
     let role: MessageRole
     let content: String
-    let timestamp: Date?
+    // let timestamp: Date?
 }
 
 enum MessageRole: String {
@@ -94,7 +94,7 @@ struct RawMessage: Decodable {
     let id: String
     let role: String
     let content: String
-    let timestamp: Date?
+    // let timestamp: Date?
 }
 
 enum JSONError: LocalizedError {

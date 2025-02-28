@@ -134,8 +134,8 @@ struct JsonReaderView: View {
                     let newMessage = Message(
                         id: message.id,
                         role: role,
-                        content: message.content.stripHTMLTags(),
-                        timestamp: message.timestamp
+                        content: message.content.stripHTMLTags()
+//                        timestamp: message.timestamp
                     )
                     
                     if var existing = conversations[conversationID] {

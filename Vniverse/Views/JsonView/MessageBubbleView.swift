@@ -60,11 +60,11 @@ struct MessageBubbleView: View {
                         )
                 }
                 
-                if let time = message.timestamp {
-                    Text(timeFormatter.string(from: time))
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
+                // if let time = message.timestamp {
+                //     Text(timeFormatter.string(from: time))
+                //         .font(.caption2)
+                //         .foregroundColor(.secondary)
+                // }
             }
             
             if message.role != .user {
