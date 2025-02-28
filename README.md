@@ -22,7 +22,8 @@ VoiceUniverse是一款macOS平台的markdown阅读器，能够自然语音文本
 VoiceUniverse
 ├── Utils/
 │   ├── AudioController.swift # 文档音频控制器
-│   └── AudioPlaybackManager.swift    # 音频播放管理器
+│   ├── AudioPlaybackManager.swift    # 音频播放管理器
+│   └── HTMLParser.swift # HTML解析器
 ├── Services/
 │   ├── GPTSovits.swift          # AI语音合成引擎
 │   └── MarkdownService.swift     # Markdown解析服务
