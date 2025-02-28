@@ -8,6 +8,8 @@ import AppKit
 
 struct MessageBubbleView: View {
     let message: Message
+    @State private var isThinkingExpanded = false
+    
     private let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
@@ -29,15 +31,34 @@ struct MessageBubbleView: View {
                         .foregroundColor(message.role.textColor)
                 }
                 
-                Text(message.content)
-                    .textSelection(.enabled)
-                    .foregroundColor(message.role.textColor)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                if message.role == .thinking {
+                    DisclosureGroup(isExpanded: $isThinkingExpanded) {
+                        Text(message.content)
+                            .textSelection(.enabled)
+                            .foregroundColor(message.role.textColor)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                    } label: {
+                        Text("查看思考过程")
+                            .font(.caption)
+                            .foregroundColor(message.role.textColor)
+                    }
+                    .padding(8)
                     .background(
                         message.role.bubbleBackground
                             .cornerRadius(8)
                     )
+                } else {
+                    Text(message.content)
+                        .textSelection(.enabled)
+                        .foregroundColor(message.role.textColor)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(
+                            message.role.bubbleBackground
+                                .cornerRadius(8)
+                        )
+                }
                 
                 if let time = message.timestamp {
                     Text(timeFormatter.string(from: time))

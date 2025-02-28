@@ -23,7 +23,7 @@ enum MessageRole: String {
         switch self {
         case .user: return "用户"
         case .assistant: return "助手"
-        case .thinking: return "思考中"
+        case .thinking: return "思考过程"
         case .unknown: return "未知"
         }
     }
@@ -39,9 +39,9 @@ enum MessageRole: String {
     
     var iconColor: Color {
         switch self {
-        case .user: return .blue
-        case .assistant: return .green
-        case .thinking: return .purple
+        case .user: return Color(red: 0.0, green: 0.478, blue: 1.0)
+        case .assistant: return Color(red: 0.2, green: 0.8, blue: 0.4)
+        case .thinking: return Color(red: 0.6, green: 0.4, blue: 0.8)
         case .unknown: return .gray
         }
     }
@@ -51,20 +51,26 @@ enum MessageRole: String {
             switch self {
             case .user:
                 LinearGradient(
-                    colors: [Color.blue, Color.blue.opacity(0.7)],
+                    colors: [
+                        Color(red: 0.0, green: 0.478, blue: 1.0),
+                        Color(red: 0.0, green: 0.478, blue: 1.0).opacity(0.8)
+                    ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             case .assistant:
-                #if os(iOS)
-                Color(UIColor.systemGray5)
-                #elseif os(macOS)
-                Color(NSColor.systemGray)
-                #endif
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.2, green: 0.8, blue: 0.4).opacity(0.15),
+                        Color(red: 0.2, green: 0.8, blue: 0.4).opacity(0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
             case .thinking:
-                Color.purple.opacity(0.1)
+                Color(red: 0.6, green: 0.4, blue: 0.8).opacity(0.1)
             case .unknown:
-                Color.gray.opacity(0.2)
+                Color.gray.opacity(0.1)
             }
         }
     }
@@ -72,7 +78,9 @@ enum MessageRole: String {
     var textColor: Color {
         switch self {
         case .user: return .white
-        default: return .primary
+        case .assistant: return .primary
+        case .thinking: return Color(red: 0.6, green: 0.4, blue: 0.8)
+        case .unknown: return .gray
         }
     }
 }
