@@ -26,16 +26,23 @@ VoiceUniverse
 ├── Services/
 │   ├── GPTSovits.swift          # AI语音合成引擎
 │   └── MarkdownService.swift     # Markdown解析服务
-├── Views/
-│   ├── ContentView.swift         # 主视图（文档列表）
-│   ├── MarkdownReaderView.swift  # Markdown阅读视图
-│   ├── PDFReaderView.swift       # PDF阅读视图
-│   ├── JsonReaderView.swift     # Json阅读视图
-│   ├── SettingsView.swift        # 设置视图
-│   └── GPTSovitsSettingView.swift # GPT-SoVITS设置视图
+├── Views/                        # 视图层目录
+│   ├── ContentView.swift         # 主内容视图，负责整体布局和导航
+│   ├── JsonView/                 # JSON聊天记录相关视图
+│   │   ├── ErrorView.swift       # 错误提示视图
+│   │   ├── JsonReaderView.swift  # JSON文件阅读器主视图
+│   │   └── MessageBubbleView.swift # 聊天气泡组件视图
+│   ├── MarkdownView/            # Markdown文档相关视图
+│   │   └── MarkdownReaderView.swift # Markdown阅读器主视图
+│   ├── PDFView/                 # PDF文档相关视图
+│   │   └── PDFReaderView.swift  # PDF阅读器主视图
+│   └── SettingView/             # 设置相关视图
+│       ├── GPTSovitsSettingView.swift # GPT-SoVITS语音合成设置视图
+│       └── SettingsView.swift    # 应用全局设置视图
 ├── Models/
-│   └── Document.swift            # 文档数据模型
-└── VoiceUniverseApp.swift        # 主应用入口
+│   ├── JsonModels.swift         # Json数据模型
+│   └── Document.swift           # 文档数据模型
+└── VoiceUniverseApp.swift       # 主应用入口
 ```
 
 ## 3. 功能实现进度
