@@ -112,7 +112,7 @@ extension String {
         HTMLParser.parseToView(self)
     }
     
-    // 移除所有HTML标签，保留纯文本
+    // 移除所有HTML标签，保留纯文本（此功能需要保留，因为是在聊天界面中移除HTML标签）
     func stripHTMLTags() -> String {
         guard let data = self.data(using: .utf8) else { return self }
         
