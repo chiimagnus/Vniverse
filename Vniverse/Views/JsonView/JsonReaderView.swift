@@ -162,14 +162,3 @@ struct JsonReaderView: View {
         }
     }
 }
-
-// MARK: - 工具扩展
-extension String {
-    func stripHTMLTags() -> String {
-        replacingOccurrences(
-            of: "<[^>]+>",
-            with: "",
-            options: .regularExpression
-        )
-    }
-}
