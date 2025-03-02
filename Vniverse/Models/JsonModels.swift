@@ -23,7 +23,7 @@ enum MessageRole: String {
         switch self {
         case .user: return "我"
         case .assistant: return "助手"
-        case .thinking: return "思考过程"
+        case .thinking: return UserDefaults.standard.string(forKey: "AIThinkingText") ?? "AI思考回复"
         case .unknown: return "未知"
         }
     }
