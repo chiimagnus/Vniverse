@@ -78,7 +78,7 @@ struct JsonReaderView: View {
                                     // Image(systemName: "bubble.left.fill")
                                     //     .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.4))
                                     //     .frame(width: 20, height: 20)
-                                    Text("AI思考回复")
+                                    Text(UserDefaults.standard.string(forKey: "AIThinkingText") ?? "AI思考回复")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
