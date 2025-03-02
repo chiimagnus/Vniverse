@@ -95,8 +95,7 @@ struct MarkdownReaderView: View {
     var body: some View {
         OffsetScrollView(offset: $scrollOffset) {
             LazyVStack(alignment: .leading, spacing: 8) {
-                Text(document.content)
-                    .textSelection(.enabled)
+                MarkdownService.shared.createMarkdownView(from: document.content)
                     .padding(4)
             }
             .padding()
