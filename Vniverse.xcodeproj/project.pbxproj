@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D8E170422D74BF35008CB93F /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = D8E170412D74BF35008CB93F /* Markdown */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		D8B3F3642D492827008547E4 /* Vniverse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vniverse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8E170422D74BF35008CB93F /* Markdown in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = Vniverse;
 			packageProductDependencies = (
+				D8E170412D74BF35008CB93F /* Markdown */,
 			);
 			productName = Vniverse;
 			productReference = D8B3F3642D492827008547E4 /* Vniverse.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = D8B3F35B2D492827008547E4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D8E170402D74BF35008CB93F /* XCRemoteSwiftPackageReference "swift-markdown" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D8B3F3652D492827008547E4 /* Products */;
 			projectDirPath = "";
@@ -325,6 +334,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D8E170402D74BF35008CB93F /* XCRemoteSwiftPackageReference "swift-markdown" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swiftlang/swift-markdown";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D8E170412D74BF35008CB93F /* Markdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D8E170402D74BF35008CB93F /* XCRemoteSwiftPackageReference "swift-markdown" */;
+			productName = Markdown;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D8B3F35C2D492827008547E4 /* Project object */;
 }

@@ -96,6 +96,10 @@ VoiceUniverse
 - [x] 阅读进度自动保存
 - [ ] 朗读进度自动保存
 
+## 鸣谢
+- [swift-markdown](https://github.com/apple/swift-markdown) by Apple Inc.  
+  Licensed under Apache 2.0.
+
 ## 4. 支持
 如果您觉得VoiceUniverse对您有帮助，欢迎赞助支持我们的开发：
 
