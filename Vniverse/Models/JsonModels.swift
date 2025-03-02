@@ -21,7 +21,7 @@ enum MessageRole: String {
     
     var displayName: String {
         switch self {
-        case .user: return "用户"
+        case .user: return "我"
         case .assistant: return "助手"
         case .thinking: return "思考过程"
         case .unknown: return "未知"

@@ -38,12 +38,19 @@ struct MessageBubbleView: View {
                 Spacer()
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
                 HStack {
-                    roleIcon(message.role)
-                    Text(message.role.displayName)
-                        .font(.caption)
-                        .foregroundColor(message.role.textColor)
+                    if message.role == .user {
+                        Text(message.role.displayName)
+                            .font(.caption)
+                            .foregroundColor(message.role.textColor)
+                        roleIcon(message.role)
+                    } else {
+                        roleIcon(message.role)
+                        Text(message.role.displayName)
+                            .font(.caption)
+                            .foregroundColor(message.role.textColor)
+                    }
                 }
                 
                 if message.role == .thinking {
