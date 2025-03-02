@@ -27,7 +27,7 @@ struct OffsetScrollView<Content: View>: NSViewRepresentable {
             guard !isSettingOffset else { return }
             if let clipView = notification.object as? NSClipView {
                 let newOffset = clipView.bounds.origin.y
-                print("滚动位置更新：\(newOffset)")
+                // print("滚动位置更新：\(newOffset)")
                 offset.wrappedValue = newOffset
             }
         }
@@ -104,7 +104,7 @@ struct MarkdownReaderView: View {
         }
         .onChange(of: scrollOffset) { _, newValue in
             let positionString = String(format: "%.1f", newValue)
-            print("保存滚动位置：\(positionString)")
+            // print("保存滚动位置：\(positionString)")
             document.saveReadingPosition(positionString)
             try? modelContext.save()
         }
