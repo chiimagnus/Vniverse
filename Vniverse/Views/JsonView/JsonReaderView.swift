@@ -60,8 +60,68 @@ struct JsonReaderView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    ForEach(conversation.messages) { message in
-                        MessageBubbleView(message: message)
+                    ForEach(Array(conversation.messages.enumerated()), id: \.element.id) { index, message in
+                        // 获取下一条消息（如果存在）
+                        let nextMessage = index + 1 < conversation.messages.count ? conversation.messages[index + 1] : nil
+                        
+                        // 如果当前消息是思考过程，下一条是助手回复，则使用组合视图
+                        if message.role == .thinking && nextMessage?.role == .assistant {
+                            // 创建一个自定义的组合视图（思考过程+助手回复）
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "brain.head.profile")
+                                        .foregroundColor(Color(red: 0.6, green: 0.4, blue: 0.8))
+                                        .frame(width: 20, height: 20)
+                                    // Image(systemName: "plus")
+                                    //     .foregroundColor(.gray)
+                                    //     .font(.caption2)
+                                    // Image(systemName: "bubble.left.fill")
+                                    //     .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.4))
+                                    //     .frame(width: 20, height: 20)
+                                    Text("AI思考回复")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                // 思考过程折叠部分
+                                DisclosureGroup {
+                                    Text(message.content)
+                                        .textSelection(.enabled)
+                                        .foregroundColor(message.role.textColor)
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                } label: {
+                                    Text("查看思考过程")
+                                        .font(.caption)
+                                        .foregroundColor(message.role.textColor)
+                                }
+                                .padding(8)
+                                .background(
+                                    message.role.bubbleBackground
+                                        .cornerRadius(8)
+                                )
+                                
+                                // 助手回复部分
+                                Text(nextMessage!.content)
+                                    .textSelection(.enabled)
+                                    .foregroundColor(nextMessage!.role.textColor)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(
+                                        nextMessage!.role.bubbleBackground
+                                            .cornerRadius(8)
+                                    )
+                            }
+                            .padding(.trailing)
+                        } 
+                        // 如果是AI助手消息，但前一条是思考过程，则跳过
+                        else if message.role == .assistant && index > 0 && conversation.messages[index - 1].role == .thinking {
+                            EmptyView()
+                        }
+                        // 其他类型的消息正常显示
+                        else {
+                            MessageBubbleView(message: message, nextMessage: nextMessage)
+                        }
                     }
                 }
                 .padding()

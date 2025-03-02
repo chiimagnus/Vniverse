@@ -8,7 +8,13 @@ import AppKit
 
 struct MessageBubbleView: View {
     let message: Message
+    let nextMessage: Message?
     @State private var isThinkingExpanded = false
+    
+    init(message: Message, nextMessage: Message? = nil) {
+        self.message = message
+        self.nextMessage = nextMessage
+    }
     
     private let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -18,6 +24,15 @@ struct MessageBubbleView: View {
     }()
     
     var body: some View {
+        if message.role == .user || message.role == .assistant || 
+           message.role == .thinking {
+            standardMessageView
+        } else {
+            standardMessageView
+        }
+    }
+    
+    private var standardMessageView: some View {
         HStack {
             if message.role == .user {
                 Spacer()
@@ -32,32 +47,9 @@ struct MessageBubbleView: View {
                 }
                 
                 if message.role == .thinking {
-                    DisclosureGroup(isExpanded: $isThinkingExpanded) {
-                        Text(message.content)
-                            .textSelection(.enabled)
-                            .foregroundColor(message.role.textColor)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                    } label: {
-                        Text("查看思考过程")
-                            .font(.caption)
-                            .foregroundColor(message.role.textColor)
-                    }
-                    .padding(8)
-                    .background(
-                        message.role.bubbleBackground
-                            .cornerRadius(8)
-                    )
+                    thinkingContentView
                 } else {
-                    Text(message.content)
-                        .textSelection(.enabled)
-                        .foregroundColor(message.role.textColor)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(
-                            message.role.bubbleBackground
-                                .cornerRadius(8)
-                        )
+                    contentView(for: message)
                 }
                 
                 // if let time = message.timestamp {
@@ -71,6 +63,37 @@ struct MessageBubbleView: View {
                 Spacer()
             }
         }
+    }
+    
+    private var thinkingContentView: some View {
+        DisclosureGroup(isExpanded: $isThinkingExpanded) {
+            Text(message.content)
+                .textSelection(.enabled)
+                .foregroundColor(message.role.textColor)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+        } label: {
+            Text("查看思考过程")
+                .font(.caption)
+                .foregroundColor(message.role.textColor)
+        }
+        .padding(8)
+        .background(
+            message.role.bubbleBackground
+                .cornerRadius(8)
+        )
+    }
+    
+    private func contentView(for message: Message) -> some View {
+        Text(message.content)
+            .textSelection(.enabled)
+            .foregroundColor(message.role.textColor)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(
+                message.role.bubbleBackground
+                    .cornerRadius(8)
+            )
     }
     
     private func roleIcon(_ role: MessageRole) -> some View {
