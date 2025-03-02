@@ -124,7 +124,7 @@ class MarkdownService {
                     }
                     
                     // 标题周围添加额外间距
-                    result[range].paragraphStyle = createParagraphStyle(spacing: paragraphSpacing * 1.5)
+//                    result[range].paragraphStyle = createParagraphStyle(spacing: paragraphSpacing * 1.5)
                 }
                 
                 // 引用块样式
@@ -133,19 +133,19 @@ class MarkdownService {
                     result[range].font = bodyFont.italic()
                     result[range].backgroundColor = quoteBackground
                     
-                    // 创建带有左侧边框的段落样式
-                    let paragraphStyle = DispatchQueue.main.sync {
-                        let style = NSMutableParagraphStyle()
-                        style.headIndent = 20
-                        style.firstLineHeadIndent = 20
-                        style.paragraphSpacing = paragraphSpacing
-                        style.paragraphSpacingBefore = paragraphSpacing
-                        return style
-                    }
-                    // 在主线程上设置paragraphStyle属性
-                    DispatchQueue.main.sync {
-                        result[range].paragraphStyle = paragraphStyle
-                    }
+//                    // 创建带有左侧边框的段落样式
+//                    _ = DispatchQueue.main.sync {
+//                        let style = NSMutableParagraphStyle()
+//                        style.headIndent = 20
+//                        style.firstLineHeadIndent = 20
+//                        style.paragraphSpacing = paragraphSpacing
+//                        style.paragraphSpacingBefore = paragraphSpacing
+//                        return style
+//                    }
+//                    // 在主线程上设置paragraphStyle属性
+//                    DispatchQueue.main.sync {
+//                        result[range].paragraphStyle = paragraphStyle
+//                    }
                 }
                 
                 // 列表项样式
@@ -162,17 +162,17 @@ class MarkdownService {
                     }
                     
                     // 根据嵌套级别设置缩进
-                    let paragraphStyle = DispatchQueue.main.sync {
+                    _ = DispatchQueue.main.sync {
                         let style = NSMutableParagraphStyle()
                         style.headIndent = 20 * CGFloat(level + 1)
                         style.firstLineHeadIndent = 20 * CGFloat(level + 1) - 10
                         style.paragraphSpacing = paragraphSpacing * 0.5
                         return style
                     }
-                    // 在主线程上设置paragraphStyle属性
-                    DispatchQueue.main.sync {
-                        result[range].paragraphStyle = paragraphStyle
-                    }
+//                    // 在主线程上设置paragraphStyle属性
+//                    DispatchQueue.main.sync {
+//                        result[range].paragraphStyle = paragraphStyle
+//                    }
                 }
                 
                 // 检测元数据区域 (处理YAML前端)
@@ -180,15 +180,15 @@ class MarkdownService {
                     result[range].foregroundColor = metadataColor
                     result[range].font = .system(.caption, design: .monospaced)
                     
-                    let paragraphStyle = DispatchQueue.main.sync {
-                        let style = NSMutableParagraphStyle()
-                        style.paragraphSpacing = paragraphSpacing
-                        return style
-                    }
-                    // 在主线程上设置paragraphStyle属性
-                    DispatchQueue.main.sync {
-                        result[range].paragraphStyle = paragraphStyle
-                    }
+//                    _ = DispatchQueue.main.sync {
+//                        let style = NSMutableParagraphStyle()
+//                        style.paragraphSpacing = paragraphSpacing
+//                        return style
+//                    }
+//                    // 在主线程上设置paragraphStyle属性
+//                    DispatchQueue.main.sync {
+//                        result[range].paragraphStyle = paragraphStyle
+//                    }
                 }
             }
             
@@ -224,17 +224,17 @@ class MarkdownService {
     }
     
     /// 创建段落样式
-    private func createParagraphStyle(spacing: CGFloat) -> NSParagraphStyle {
-        // 使用主线程创建段落样式，避免Sendable一致性问题
-        let style = DispatchQueue.main.sync {
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.paragraphSpacingBefore = spacing
-            paragraphStyle.paragraphSpacing = spacing
-            paragraphStyle.lineSpacing = 4
-            return paragraphStyle
-        }
-        return style
-    }
+//    private func createParagraphStyle(spacing: CGFloat) -> NSParagraphStyle {
+//        // 使用主线程创建段落样式，避免Sendable一致性问题
+//        let style = DispatchQueue.main.sync {
+//            let paragraphStyle = NSMutableParagraphStyle()
+//            paragraphStyle.paragraphSpacingBefore = spacing
+//            paragraphStyle.paragraphSpacing = spacing
+//            paragraphStyle.lineSpacing = 4
+//            return paragraphStyle
+//        }
+//        return style
+//    }
     
     /// 创建Markdown视图
     /// - Parameter text: Markdown文本
