@@ -28,6 +28,7 @@ struct VniverseApp: App {
     }()
 
     @State private var showSettings = false
+    @AppStorage("appTheme") private var appTheme: AppTheme = .system
 
     var body: some Scene {
         WindowGroup {
@@ -35,6 +36,7 @@ struct VniverseApp: App {
                 .sheet(isPresented: $showSettings) {
                     SettingsView()
                 }
+                .preferredColorScheme(colorScheme)
         }
         .modelContainer(sharedModelContainer)
         .commands {
@@ -47,6 +49,17 @@ struct VniverseApp: App {
                 }
                 .keyboardShortcut(",", modifiers: [.command])
             }
+        }
+    }
+    
+    private var colorScheme: ColorScheme? {
+        switch appTheme {
+        case .light:
+            return .light
+        case .dark:
+            return .dark
+        case .system:
+            return nil
         }
     }
     

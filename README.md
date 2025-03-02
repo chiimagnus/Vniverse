@@ -39,6 +39,7 @@ VoiceUniverse
 │   │   └── PDFReaderView.swift  # PDF阅读器主视图
 │   └── SettingView/             # 设置相关视图
 │       ├── GPTSovitsSettingView.swift # GPT-SoVITS语音合成设置视图
+│       ├── BasicSettingView.swift # 基本设置视图
 │       └── SettingsView.swift    # 应用全局设置视图
 ├── Models/
 │   ├── JsonModels.swift         # Json数据模型
