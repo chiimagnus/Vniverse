@@ -51,51 +51,7 @@ class MarkdownService {
                 .foregroundColor(.red)
         }
     }
-    
-    /// 将Markdown转换为纯文本
-    /// - Parameter markdown: Markdown文本
-    /// - Returns: 纯文本
-    // func markdownToPlainText(_ markdown: String) -> String {
-    //     // 使用swift-markdown的访问者模式提取纯文本
-    //     let document = parse(markdown)
-    //     var visitor = PlainTextExtractor()
-    //     document.accept(&visitor)
-    //     return visitor.plainText
-    // }
 }
-
-/// 简单的纯文本提取器
-// class PlainTextExtractor: MarkupVisitor {
-//     var plainText = ""
-    
-//     func defaultVisit(_ markup: Markup) -> () {
-//         for child in markup.children {
-//             var mutableSelf = self
-//             child.accept(&mutableSelf)
-//             self.plainText = mutableSelf.plainText
-//         }
-//     }
-    
-//     func visitText(_ text: Markdown.Text) -> () {
-//         plainText += text.string
-//     }
-    
-//     func visitParagraph(_ paragraph: Markdown.Paragraph) -> () {
-//         defaultVisit(paragraph)
-//         plainText += "\n\n"
-//     }
-    
-//     func visitHeading(_ heading: Markdown.Heading) -> () {
-//         defaultVisit(heading)
-//         plainText += "\n"
-//     }
-    
-//     func visitListItem(_ listItem: Markdown.ListItem) -> () {
-//         plainText += "• "
-//         defaultVisit(listItem)
-//         plainText += "\n"
-//     }
-// }
 
 /// Markdown文件查看器组件
 struct MarkdownFileViewer: View {
