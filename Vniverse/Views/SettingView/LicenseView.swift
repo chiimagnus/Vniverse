@@ -70,7 +70,7 @@ SOFTWARE.
                     .padding(.vertical, 4)
                 }
         }
-        .navigationTitle("关于")
+        .navigationTitle("感谢下列开源项目的帮助🎉")
     }
 }
 
