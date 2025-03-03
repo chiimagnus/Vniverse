@@ -7,18 +7,22 @@ struct SettingsView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             // 基本设置
-            BasicSettingsView()
-                .tabItem {
-                    Label("基本设置", systemImage: "gear")
-                }
-                .tag(0)
+            NavigationStack {
+                BasicSettingsView()
+            }
+            .tabItem {
+                Label("基本设置", systemImage: "gear")
+            }
+            .tag(0)
             
             // GPT-SoVITS设置
-            GPTSovitsSettingView()
-                .tabItem {
-                    Label("AI语音设置", systemImage: "waveform")
-                }
-                .tag(1)
+            NavigationStack {
+                GPTSovitsSettingView()
+            }
+            .tabItem {
+                Label("AI语音设置", systemImage: "waveform")
+            }
+            .tag(1)
         }
         .frame(width: 600, height: 400)
         .padding()

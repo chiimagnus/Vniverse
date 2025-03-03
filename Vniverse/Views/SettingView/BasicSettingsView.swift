@@ -40,6 +40,14 @@ struct BasicSettingsView: View {
                         UserDefaults.standard.set(newValue, forKey: "AIThinkingText")
                     }
             }
+            
+            Section("关于Vniverse") {
+                NavigationLink {
+                    LicenseView()
+                } label: {
+                    Text("开源条款")
+                }
+            }
         }
         .formStyle(.grouped)
     }
