@@ -23,6 +23,7 @@ VoiceUniverse
 ├── Utils/
 │   ├── AudioController.swift # 文档音频控制器
 │   ├── AudioPlaybackManager.swift    # 音频播放管理器
+│   ├── ContentView+DocumentLink.swift    # ContentView 的扩展文件，主要用于创建和管理文档链接视图的功能
 │   └── HTMLParser.swift # HTML解析器
 ├── Services/
 │   ├── GPTSovits.swift          # AI语音合成引擎

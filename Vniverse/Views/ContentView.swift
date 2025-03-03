@@ -23,22 +23,22 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             List {
-                ForEach(documents) { document in
-                    NavigationLink(value: document.id.uuidString) {
-                        VStack(alignment: .leading) {
-                            Text(document.title)
-                                .font(.headline)
-                            Text(document.fileName)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                deleteDocument(document)
-                            } label: {
-                                Label("删除", systemImage: "trash")
-                            }
-                        }
+                // 按文件类型分组显示文档
+                Section(header: Label("Markdown文档", systemImage: "doc.text")) {
+                    ForEach(documents.filter { $0.fileType == .text }) { document in
+                        documentLink(for: document)
+                    }
+                }
+                
+                Section(header: Label("PDF文档", systemImage: "doc.viewfinder")) {
+                    ForEach(documents.filter { $0.fileType == .pdf }) { document in
+                        documentLink(for: document)
+                    }
+                }
+                
+                Section(header: Label("JSON文档", systemImage: "curlybraces")) {
+                    ForEach(documents.filter { $0.fileType == .json }) { document in
+                        documentLink(for: document)
                     }
                 }
             }
@@ -125,7 +125,7 @@ struct ContentView: View {
         )
     }
     
-    private func deleteDocument(_ document: Document) {
+    func deleteDocument(_ document: Document) {
         withAnimation {
             if document.id.uuidString == selectedDocumentID {
                 selectedDocumentID = nil
