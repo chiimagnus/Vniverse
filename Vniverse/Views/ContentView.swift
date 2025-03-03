@@ -97,6 +97,32 @@ struct ContentView: View {
         ) { result in
             handleFileImport(result)
         }
+        .onAppear {
+            setupNotificationObserver()
+        }
+        .onDisappear {
+            removeNotificationObserver()
+        }
+    }
+    
+    // 设置通知观察者
+    private func setupNotificationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("ImportDocument"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            showingFilePicker = true
+        }
+    }
+    
+    // 移除通知观察者
+    private func removeNotificationObserver() {
+        NotificationCenter.default.removeObserver(
+            self,
+            name: Notification.Name("ImportDocument"),
+            object: nil
+        )
     }
     
     private func deleteDocument(_ document: Document) {

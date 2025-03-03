@@ -40,14 +40,54 @@ struct VniverseApp: App {
         }
         .modelContainer(sharedModelContainer)
         .commands {
+            // 应用菜单
             CommandGroup(replacing: .appInfo) {
-                EmptyView()
-            }
-            CommandMenu("设置") {
+                Button("关于 Vniverse") {
+                    // TODO: 显示关于窗口
+                }
+                
+                Divider()
+
                 Button("偏好设置...") {
                     showSettings.toggle()
                 }
                 .keyboardShortcut(",", modifiers: [.command])
+            }
+            
+            // 文件菜单
+            CommandGroup(replacing: .newItem) {
+                Button("导入文档...") {
+                    NotificationCenter.default.post(name: Notification.Name("ImportDocument"), object: nil)
+                }
+                .keyboardShortcut("o", modifiers: [.command])
+            }
+            
+            // 编辑菜单
+            TextEditingCommands()
+
+            // 窗口菜单
+            // CommandGroup(replacing: .windowList) {
+            //     Button("最小化") {
+            //         NSApplication.shared.keyWindow?.miniaturize(nil)
+            //     }
+            //     .keyboardShortcut("m", modifiers: [.command])
+                
+            //     Button("缩放") {
+            //         NSApplication.shared.keyWindow?.zoom(nil)
+            //     }
+                
+            //     Divider()
+                
+            //     Button("前置所有窗口") {
+            //         NSApplication.shared.activate(ignoringOtherApps: true)
+            //     }
+            // }
+            
+            // 帮助菜单
+            CommandGroup(replacing: .help) {
+                Button("Vniverse 快捷键手册") {
+                    // TODO: 显示帮助文档
+                }
             }
         }
     }
