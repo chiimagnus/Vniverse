@@ -6,11 +6,9 @@
     <a>中文</a> | <a href="README.en.md">English</a>
 </div>
 
-VoiceUniverse是一款macOS平台的markdown阅读器，能够自然语音文本朗读和自动高亮朗读文本。
+Vniverse是一款macOS平台的pdf、markdown、AI 聊天保存软件，并且能够自然语音朗读文本。
 
 ## 1. 功能特点
-- [ ] 🎯 朗读文本自动高亮
-- [ ] 📍 智能定位当前朗读位置
 - 🤖 AI语音合成支持，基于 [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) 引擎
 - 📚 支持markdown文档阅读
 - 📚 支持PDF文档阅读
