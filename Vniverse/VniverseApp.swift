@@ -89,6 +89,14 @@ struct VniverseApp: App {
                     // TODO: 显示帮助文档
                 }
             }
+            
+            // 侧边栏切换快捷键
+            CommandGroup(after: .sidebar) {
+                Button("切换侧边栏") {
+                    NSApp.keyWindow?.firstResponder?.tryToPerform(#selector(NSSplitViewController.toggleSidebar(_:)), with: nil)
+                }
+                .keyboardShortcut("s", modifiers: [.command, .option])
+            }
         }
     }
     
