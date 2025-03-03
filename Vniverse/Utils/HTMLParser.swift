@@ -13,15 +13,28 @@ class HTMLParser {
             let styledHTML = """
             <style>
             body { font-family: -apple-system, system-ui; line-height: 1.5; }
-            h1, h2, h3, h4, h5, h6 { margin: 1em 0 0.5em 0; }
+            h1 { font-size: 1.8em; font-weight: bold; margin: 1em 0 0.5em 0; }
+            h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em 0; }
+            h3 { font-size: 1.3em; font-weight: bold; margin: 1em 0 0.5em 0; }
+            h4 { font-size: 1.2em; font-weight: bold; margin: 1em 0 0.5em 0; }
+            h5 { font-size: 1.1em; font-weight: bold; margin: 1em 0 0.5em 0; }
+            h6 { font-size: 1em; font-weight: bold; margin: 1em 0 0.5em 0; }
             p { margin: 0.5em 0; }
             ul, ol { margin: 0.5em 0; padding-left: 2em; }
             li { margin: 0.25em 0; }
             code { font-family: Menlo, Monaco, monospace; background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 3px; }
             pre { background-color: rgba(0,0,0,0.05); padding: 1em; border-radius: 5px; overflow-x: auto; }
             strong { font-weight: 600; }
+            em { font-style: italic; }
+            blockquote { border-left: 4px solid rgba(0,0,0,0.1); margin: 1em 0; padding: 0.5em 1em; background-color: rgba(0,0,0,0.03); }
+            a { color: #0366d6; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+            table { border-collapse: collapse; margin: 1em 0; width: 100%; }
+            th, td { border: 1px solid rgba(0,0,0,0.1); padding: 0.5em; text-align: left; }
+            th { background-color: rgba(0,0,0,0.05); }
+            img { max-width: 100%; height: auto; }
             </style>
-            (htmlString)
+            \(htmlString)
             """
             
             let attributedString = try NSAttributedString(

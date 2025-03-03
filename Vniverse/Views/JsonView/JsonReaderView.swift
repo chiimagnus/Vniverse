@@ -85,8 +85,7 @@ struct JsonReaderView: View {
                                 
                                 // 思考过程折叠部分
                                 DisclosureGroup {
-                                    Text(message.content)
-                                        .textSelection(.enabled)
+                                    message.content.parseHTML()
                                         .foregroundColor(message.role.textColor)
                                         .padding(.vertical, 8)
                                         .padding(.horizontal, 12)
@@ -102,8 +101,7 @@ struct JsonReaderView: View {
                                 )
                                 
                                 // 助手回复部分
-                                Text(nextMessage!.content)
-                                    .textSelection(.enabled)
+                                nextMessage!.content.parseHTML()
                                     .foregroundColor(nextMessage!.role.textColor)
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 12)
@@ -194,8 +192,7 @@ struct JsonReaderView: View {
                     let newMessage = Message(
                         id: message.id,
                         role: role,
-                        content: message.content.stripHTMLTags()
-//                        timestamp: message.timestamp
+                        content: message.content
                     )
                     
                     if var existing = conversations[conversationID] {

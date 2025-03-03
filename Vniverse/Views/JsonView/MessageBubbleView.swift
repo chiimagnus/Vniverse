@@ -74,8 +74,7 @@ struct MessageBubbleView: View {
     
     private var thinkingContentView: some View {
         DisclosureGroup(isExpanded: $isThinkingExpanded) {
-            Text(message.content)
-                .textSelection(.enabled)
+            message.content.parseHTML()
                 .foregroundColor(message.role.textColor)
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
@@ -92,15 +91,17 @@ struct MessageBubbleView: View {
     }
     
     private func contentView(for message: Message) -> some View {
-        Text(message.content)
-            .textSelection(.enabled)
-            .foregroundColor(message.role.textColor)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .background(
-                message.role.bubbleBackground
-                    .cornerRadius(8)
-            )
+        VStack {
+            // 使用HTMLParser解析和渲染HTML内容
+            message.content.parseHTML()
+                .foregroundColor(message.role.textColor)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(
+                    message.role.bubbleBackground
+                        .cornerRadius(8)
+                )
+        }
     }
     
     private func roleIcon(_ role: MessageRole) -> some View {
