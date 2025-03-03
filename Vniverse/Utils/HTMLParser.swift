@@ -2,7 +2,70 @@ import SwiftUI
 import Foundation
 
 class HTMLParser {
+    // 预处理函数：将纯文本中的特殊标记转换为HTML标记
+    static func preprocessText(_ text: String) -> String {
+        var result = text
+        
+        // 处理代码块 (```)
+        let codeBlockPattern = "```(?:(\\w+)\\n)?([\\s\\S]*?)```"
+        if let regex = try? NSRegularExpression(pattern: codeBlockPattern, options: []) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+            
+            // 从后向前替换，以避免修改位置
+            for match in matches.reversed() {
+                let languageRange = match.range(at: 1)
+                let codeRange = match.range(at: 2)
+                
+                var language = ""
+                if languageRange.location != NSNotFound {
+                    language = nsString.substring(with: languageRange)
+                }
+                
+                if codeRange.location != NSNotFound {
+                    let code = nsString.substring(with: codeRange)
+                    let escapedCode = code
+                        .replacingOccurrences(of: "&", with: "&amp;")
+                        .replacingOccurrences(of: "<", with: "&lt;")
+                        .replacingOccurrences(of: ">", with: "&gt;")
+                    
+                    let replacement = "<pre><code class=\"language-\(language)\">\(escapedCode)</code></pre>"
+                    result = (result as NSString).replacingCharacters(in: match.range, with: replacement)
+                }
+            }
+        }
+        
+        // 处理单行代码 (`)
+        let inlineCodePattern = "`([^`]+)`"
+        if let regex = try? NSRegularExpression(pattern: inlineCodePattern, options: []) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+            
+            for match in matches.reversed() {
+                if match.range(at: 1).location != NSNotFound {
+                    let code = nsString.substring(with: match.range(at: 1))
+                    let escapedCode = code
+                        .replacingOccurrences(of: "&", with: "&amp;")
+                        .replacingOccurrences(of: "<", with: "&lt;")
+                        .replacingOccurrences(of: ">", with: "&gt;")
+                    
+                    let replacement = "<code>\(escapedCode)</code>"
+                    result = (result as NSString).replacingCharacters(in: match.range, with: replacement)
+                }
+            }
+        }
+        
+        // 处理换行符 - 将\n转换为<br>
+        // 但保留代码块中的原始格式
+        result = result.replacingOccurrences(of: "\n", with: "<br>")
+        
+        return result
+    }
+
     static func parse(_ htmlString: String) -> NSAttributedString {
+        // 预处理文本，转换特殊标记
+        let processedHTML = preprocessText(htmlString)
+        
         let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
             .documentType: NSAttributedString.DocumentType.html,
             .characterEncoding: String.Encoding.utf8.rawValue
@@ -23,7 +86,8 @@ class HTMLParser {
             ul, ol { margin: 0.5em 0; padding-left: 2em; }
             li { margin: 0.25em 0; }
             code { font-family: Menlo, Monaco, monospace; background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 3px; }
-            pre { background-color: rgba(0,0,0,0.05); padding: 1em; border-radius: 5px; overflow-x: auto; }
+            pre { margin: 1em 0; }
+            pre code { display: block; overflow-x: auto; padding: 1em; background-color: rgba(0,0,0,0.05); border-radius: 5px; white-space: pre; }
             strong { font-weight: 600; }
             em { font-style: italic; }
             blockquote { border-left: 4px solid rgba(0,0,0,0.1); margin: 1em 0; padding: 0.5em 1em; background-color: rgba(0,0,0,0.03); }
@@ -34,7 +98,7 @@ class HTMLParser {
             th { background-color: rgba(0,0,0,0.05); }
             img { max-width: 100%; height: auto; }
             </style>
-            \(htmlString)
+            \(processedHTML)
             """
             
             let attributedString = try NSAttributedString(
