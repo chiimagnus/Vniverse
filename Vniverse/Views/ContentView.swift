@@ -23,6 +23,20 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             List {
+                // 收藏文档分类
+                Section(header: Label("收藏文档", systemImage: "star.fill").foregroundColor(.yellow)) {
+                    ForEach(documents.filter { $0.isFavorite }) { document in
+                        documentLink(for: document)
+                    }
+                    
+                    if !documents.contains(where: { $0.isFavorite }) {
+                        Text("暂无收藏文档")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .italic()
+                    }
+                }
+                
                 // 按文件类型分组显示文档
                 Section(header: Label("Markdown文档", systemImage: "doc.text")) {
                     ForEach(documents.filter { $0.fileType == .text }) { document in
@@ -102,6 +116,15 @@ struct ContentView: View {
         }
         .onDisappear {
             removeNotificationObserver()
+        }
+        // 监听文档变化并自动保存
+        .onChange(of: documents) { oldDocuments, newDocuments in
+            do {
+                try modelContext.save()
+                print("✅ 文档状态已自动保存")
+            } catch {
+                print("❌ 文档状态保存失败: \(error)")
+            }
         }
     }
     

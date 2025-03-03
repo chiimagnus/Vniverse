@@ -51,6 +51,9 @@ final class Document: ObservableObject, Identifiable {
     var timestamp: Date
     var fileType: DocumentType = DocumentType.text // 使用完整的类型名称
     
+    // 新增收藏属性
+    var isFavorite: Bool = false
+    
     // 新增阅读位置属性
     var lastReadPosition: String?  // 存储位置标识（Markdown用段落ID，PDF用页面索引+位置）
     var lastReadTimestamp: Date?   // 最后阅读时间
