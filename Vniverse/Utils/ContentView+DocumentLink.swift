@@ -16,9 +16,9 @@ extension ContentView {
             VStack(alignment: .leading) {
                 Text(document.title)
                     .font(.headline)
-                Text(document.fileName)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                // Text(document.fileName)
+                //     .font(.caption)
+                //     .foregroundColor(.secondary)
             }
             .contextMenu {
                 Button(role: .destructive) {
