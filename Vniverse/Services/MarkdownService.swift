@@ -1,306 +1,247 @@
+//
+// MarkdownService.swift
+// Vniverse
+//
+// This file uses swift-markdown-ui (https://github.com/gonzalezreal/swift-markdown-ui)
+// Copyright (c) 2020-2024 Guillermo Gonzalez
+// Licensed under MIT License
+//
+
 import Foundation
 import SwiftUI
-import Markdown // 使用 Apple 的 swift-markdown 库 (Apache 2.0)
+import MarkdownUI
 
-/// Markdown服务，使用官方Swift-Markdown库解析和渲染Markdown文本
+/// Markdown服务，使用 swift-markdown-ui 库解析和渲染Markdown文本
 class MarkdownService {
     /// 单例实例
     static let shared = MarkdownService()
     
-    /// 基础样式配置
-    private var bodyFont: Font = .system(.body)
-    private var headingFont: Font = .system(.title3, design: .serif, weight: .semibold)
-    private var codeFont: Font = .system(.body, design: .monospaced)
-    private var linkColor: Color = .blue
-    private var codeBackground: Color = Color(.sRGB, red: 0.95, green: 0.95, blue: 0.95, opacity: 1)
-    private var quoteColor: Color = .secondary
-    private var quoteBackground: Color = Color(.sRGB, red: 0.96, green: 0.96, blue: 0.96, opacity: 1)
-    private var headingColor: Color = .primary
+    /// 当前使用的 Markdown 主题
+    private var currentTheme: Theme = .basic
     
-    // 段落间距
-    private var paragraphSpacing: CGFloat = 12.0
-    // 元数据区域样式
-    private var metadataColor: Color = Color(.sRGB, red: 0.5, green: 0.5, blue: 0.6, opacity: 1)
+    /// 图片资源的基础URL
+    private var imageBaseURL: URL?
     
-    private init() {}
-    
-    /// 设置文本字体
-    /// - Parameter font: 字体
-    func setBodyFont(_ font: Font) {
-        self.bodyFont = font
+    private init() {
+        // 初始化自定义主题
+        setupCustomTheme()
     }
     
-    /// 设置标题字体
-    /// - Parameter font: 字体
-    func setHeadingFont(_ font: Font) {
-        self.headingFont = font
-    }
-    
-    /// 设置链接颜色
-    /// - Parameter color: 颜色
-    func setLinkColor(_ color: Color) {
-        self.linkColor = color
-    }
-    
-    /// 解析Markdown文本为Document对象
-    /// - Parameter text: Markdown文本
-    /// - Returns: 解析后的Document对象
-    func parse(_ text: String) -> Markdown.Document {
-        return Markdown.Document(parsing: text)
-    }
-    
-    /// 将Markdown文本转换为AttributedString
-    /// - Parameter text: Markdown文本
-    /// - Returns: 格式化的AttributedString
-    func parseToAttributedString(_ text: String) -> AttributedString {
-        do {
-            // 使用SwiftUI的原生Markdown解析能力
-            var attributedString = try AttributedString(markdown: text, options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
+    /// 设置自定义 Markdown 主题
+    private func setupCustomTheme() {
+        // 创建一个自定义主题
+        let vniverseTheme = Theme()
+            // 文本样式
+            .text {
+                FontSize(.em(1.0))
+                FontFamily(.system(.default))
+                ForegroundColor(.primary)
+            }
+            // 强调文本样式
+            .strong {
+                FontWeight(.bold)
+            }
+            // 斜体样式
+            .emphasis {
+                FontStyle(.italic)
+            }
+            // 代码样式
+            .code {
+                FontFamilyVariant(.monospaced)
+                FontSize(.em(0.85))
+                BackgroundColor(Color(.sRGB, red: 0.95, green: 0.95, blue: 0.95, opacity: 1))
+            }
+            // 链接样式
+            .link {
+                ForegroundColor(.blue)
+                UnderlineStyle(.single)
+            }
+            // 删除线样式
+            .strikethrough {
+                StrikethroughStyle(.single)
+            }
+            // 标题样式
+            .heading1 { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontWeight(.bold)
+                        FontSize(.em(2.0))
+                        FontFamily(.system(.serif))
+                        ForegroundColor(.primary)
+                    }
+                    .markdownMargin(top: 24, bottom: 16)
+            }
+            .heading2 { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontWeight(.bold)
+                        FontSize(.em(1.75))
+                        FontFamily(.system(.serif))
+                        ForegroundColor(.primary)
+                    }
+                    .markdownMargin(top: 24, bottom: 16)
+            }
+            .heading3 { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontWeight(.semibold)
+                        FontSize(.em(1.5))
+                        FontFamily(.system(.serif))
+                        ForegroundColor(.primary)
+                    }
+                    .markdownMargin(top: 24, bottom: 16)
+            }
+            .heading4 { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontWeight(.semibold)
+                        FontSize(.em(1.25))
+                        FontFamily(.system(.serif))
+                        ForegroundColor(.primary)
+                    }
+                    .markdownMargin(top: 16, bottom: 16)
+            }
+            .heading5 { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontWeight(.medium)
+                        FontSize(.em(1.125))
+                        FontFamily(.system(.serif))
+                        ForegroundColor(.primary)
+                    }
+                    .markdownMargin(top: 16, bottom: 16)
+            }
+            .heading6 { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontWeight(.medium)
+                        FontSize(.em(1.0))
+                        FontFamily(.system(.serif))
+                        ForegroundColor(.primary)
+                    }
+                    .markdownMargin(top: 16, bottom: 16)
+            }
+            // 段落样式
+            .paragraph { configuration in
+                configuration.label
+                    .relativeLineSpacing(.em(0.25))
+                    .markdownMargin(top: 0, bottom: 12)
+            }
+            // 引用块样式
+            .blockquote { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontStyle(.italic)
+                        ForegroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.sRGB, red: 0.96, green: 0.96, blue: 0.96, opacity: 1))
+                    .overlay(alignment: .leading) {
+                        Rectangle()
+                            .fill(Color.secondary)
+                            .frame(width: 4)
+                    }
+                    .markdownMargin(top: 0, bottom: 16)
+            }
+            // 代码块样式
+            .codeBlock { configuration in
+                configuration.label
+                    .markdownTextStyle {
+                        FontFamilyVariant(.monospaced)
+                        FontSize(.em(0.85))
+                    }
+                    .padding()
+                    .background(Color(.sRGB, red: 0.95, green: 0.95, blue: 0.95, opacity: 1))
+                    .cornerRadius(8)
+                    .markdownMargin(top: 0, bottom: 16)
+            }
+            // 列表样式
+            .listItem { configuration in
+                configuration.label
+                    .markdownMargin(top: .em(0.25))
+            }
+            // 图片样式
+            .image { configuration in
+                configuration.label
+                    .cornerRadius(8)
+                    .markdownMargin(top: 8, bottom: 8)
+            }
             
-            // 应用基本样式
-            attributedString = applyBasicStyles(to: attributedString)
-            
-            return attributedString
-        } catch {
-            print("🔴 Markdown解析错误: \(error)")
-            return AttributedString(text)
+        // 设置为当前主题
+        self.currentTheme = vniverseTheme
+    }
+    
+    /// 设置图片资源的基础URL
+    /// - Parameter url: 基础URL
+    func setImageBaseURL(_ url: URL?) {
+        self.imageBaseURL = url
+    }
+    
+    /// 切换 Markdown 主题
+    /// - Parameter theme: 主题类型
+    func setTheme(_ theme: MarkdownTheme) {
+        switch theme {
+        case .basic:
+            self.currentTheme = .basic
+        case .gitHub:
+            self.currentTheme = .gitHub
+        case .vniverse:
+            setupCustomTheme()
         }
     }
     
-    /// 应用基本样式
-    private func applyBasicStyles(to attributedString: AttributedString) -> AttributedString {
-        var result = attributedString
-        
-        // 遍历所有样式范围
-        for run in result.runs {
-            let range = run.range
-            
-            // 应用正文字体作为基础字体
-            result[range].font = bodyFont
-            
-            // 处理各种Markdown元素
-            if let intent = result[range].presentationIntent {
-                let description = String(describing: intent)
-                
-                // 处理标题
-                if description.contains("heading") {
-                    // 提取标题级别
-                    var level = 1
-                    for i in 1...6 {
-                        if description.contains("level: \(i)") {
-                            level = i
-                            break
-                        }
-                    }
-                    
-                    // 根据级别设置不同样式
-                    switch level {
-                    case 1:
-                        result[range].font = .system(size: 32, weight: .bold, design: .serif)
-                        result[range].foregroundColor = headingColor
-                        
-                    case 2:
-                        result[range].font = .system(size: 28, weight: .bold, design: .serif)
-                        result[range].foregroundColor = headingColor
-                        
-                    case 3:
-                        result[range].font = .system(size: 24, weight: .semibold, design: .serif)
-                        result[range].foregroundColor = headingColor
-                        
-                    case 4:
-                        result[range].font = .system(size: 20, weight: .semibold, design: .serif)
-                        result[range].foregroundColor = headingColor
-                        
-                    case 5:
-                        result[range].font = .system(size: 18, weight: .medium, design: .serif)
-                        result[range].foregroundColor = headingColor
-                        
-                    case 6:
-                        result[range].font = .system(size: 16, weight: .medium, design: .serif)
-                        result[range].foregroundColor = headingColor
-                        
-                    default:
-                        result[range].font = .system(size: 16, weight: .medium, design: .serif)
-                    }
-                    
-                    // 标题周围添加额外间距
-//                    result[range].paragraphStyle = createParagraphStyle(spacing: paragraphSpacing * 1.5)
-                }
-                
-                // 引用块样式
-                if description.contains("blockQuote") {
-                    result[range].foregroundColor = quoteColor
-                    result[range].font = bodyFont.italic()
-                    result[range].backgroundColor = quoteBackground
-                    
-//                    // 创建带有左侧边框的段落样式
-//                    _ = DispatchQueue.main.sync {
-//                        let style = NSMutableParagraphStyle()
-//                        style.headIndent = 20
-//                        style.firstLineHeadIndent = 20
-//                        style.paragraphSpacing = paragraphSpacing
-//                        style.paragraphSpacingBefore = paragraphSpacing
-//                        return style
-//                    }
-//                    // 在主线程上设置paragraphStyle属性
-//                    DispatchQueue.main.sync {
-//                        result[range].paragraphStyle = paragraphStyle
-//                    }
-                }
-                
-                // 列表项样式
-                if description.contains("listItem") {
-                    // 提取列表级别
-                    var level = 0
-                    if description.contains("orderedList") || description.contains("unorderedList") {
-                        for i in 0...5 {
-                            if description.contains("nestingLevel: \(i)") {
-                                level = i
-                                break
-                            }
-                        }
-                    }
-                    
-                    // 根据嵌套级别设置缩进
-                    _ = DispatchQueue.main.sync {
-                        let style = NSMutableParagraphStyle()
-                        style.headIndent = 20 * CGFloat(level + 1)
-                        style.firstLineHeadIndent = 20 * CGFloat(level + 1) - 10
-                        style.paragraphSpacing = paragraphSpacing * 0.5
-                        return style
-                    }
-//                    // 在主线程上设置paragraphStyle属性
-//                    DispatchQueue.main.sync {
-//                        result[range].paragraphStyle = paragraphStyle
-//                    }
-                }
-                
-                // 检测元数据区域 (处理YAML前端)
-                if description.contains("ThematicBreak") {
-                    result[range].foregroundColor = metadataColor
-                    result[range].font = .system(.caption, design: .monospaced)
-                    
-//                    _ = DispatchQueue.main.sync {
-//                        let style = NSMutableParagraphStyle()
-//                        style.paragraphSpacing = paragraphSpacing
-//                        return style
-//                    }
-//                    // 在主线程上设置paragraphStyle属性
-//                    DispatchQueue.main.sync {
-//                        result[range].paragraphStyle = paragraphStyle
-//                    }
-                }
-            }
-            
-            // 处理链接
-            if result[range].link != nil {
-                result[range].foregroundColor = linkColor
-                result[range].underlineStyle = .single
-                result[range].font = bodyFont.bold()
-            }
-            
-            // 处理行内代码
-            if result[range].inlinePresentationIntent == .code {
-                result[range].font = codeFont
-                result[range].backgroundColor = codeBackground
-                // 注意：新版API中不再支持直接设置padding
-                // 可以考虑使用其他方式添加内边距，如自定义视图或容器
-            }
-            
-            // 处理行内样式
-            if let presentationIntent = result[range].inlinePresentationIntent {
-                // 使用更安全的方式处理行内样式
-                if presentationIntent == .emphasized {
-                    result[range].font = bodyFont.italic()
-                } else if presentationIntent == .stronglyEmphasized {
-                    result[range].font = bodyFont.bold()
-                } else if presentationIntent == .strikethrough {
-                    result[range].strikethroughStyle = .single
-                }
-            }
-        }
-        
-        return result
-    }
-    
-    /// 创建段落样式
-//    private func createParagraphStyle(spacing: CGFloat) -> NSParagraphStyle {
-//        // 使用主线程创建段落样式，避免Sendable一致性问题
-//        let style = DispatchQueue.main.sync {
-//            let paragraphStyle = NSMutableParagraphStyle()
-//            paragraphStyle.paragraphSpacingBefore = spacing
-//            paragraphStyle.paragraphSpacing = spacing
-//            paragraphStyle.lineSpacing = 4
-//            return paragraphStyle
-//        }
-//        return style
-//    }
-    
-    /// 创建Markdown视图
-    /// - Parameter text: Markdown文本
+    /// 创建 Markdown 视图
+    /// - Parameter text: Markdown 文本
     /// - Returns: 渲染的视图
     func createMarkdownView(from text: String) -> some View {
-        let attributedText = parseToAttributedString(text)
-        
-        return VStack(alignment: .leading, spacing: 0) {
-            SwiftUI.Text(attributedText)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
+        Markdown(text, baseURL: nil, imageBaseURL: imageBaseURL)
+            .markdownTheme(currentTheme)
+            .textSelection(.enabled)
     }
     
-    /// 从文件URL加载并渲染Markdown视图
-    /// - Parameter fileURL: Markdown文件URL
+    /// 从文件 URL 加载并渲染 Markdown 视图
+    /// - Parameter fileURL: Markdown 文件 URL
     /// - Returns: 渲染的视图或错误信息
-    func createMarkdownViewFromFile(fileURL: URL) -> some View {
+    func createMarkdownViewFromFile(fileURL: URL) -> AnyView {
         do {
             let markdownContent = try String(contentsOf: fileURL, encoding: .utf8)
-            return createMarkdownView(from: markdownContent)
-                .navigationTitle(fileURL.deletingPathExtension().lastPathComponent)
+            return AnyView(
+                createMarkdownView(from: markdownContent)
+                    .navigationTitle(fileURL.deletingPathExtension().lastPathComponent)
+            )
         } catch {
-            return SwiftUI.Text("无法加载Markdown文件: \(error.localizedDescription)")
-                .foregroundColor(.red)
+            return AnyView(
+                Text("无法加载 Markdown 文件: \(error.localizedDescription)")
+                    .foregroundColor(.red)
+            )
         }
     }
     
-    /// 处理和显示Markdown中的图片
-    func renderMarkdownImage(url: URL?) -> some View {
-        Group {
-            if let imageURL = url {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                            .frame(height: 200)
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .cornerRadius(8)
-                    case .failure:
-                        Image(systemName: "photo")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                            .frame(height: 200)
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
-                .padding(.vertical, 8)
-            } else {
-                Image(systemName: "photo")
-                    .font(.largeTitle)
-                    .foregroundColor(.gray)
-                    .frame(height: 100)
-            }
-        }
+    /// 使用预解析的 MarkdownContent 创建视图
+    /// - Parameter content: 预解析的 MarkdownContent
+    /// - Returns: 渲染的视图
+    func createMarkdownView(from content: MarkdownContent) -> some View {
+        Markdown(content, baseURL: nil, imageBaseURL: imageBaseURL)
+            .markdownTheme(currentTheme)
+            .textSelection(.enabled)
+    }
+    
+    /// 预解析 Markdown 内容
+    /// - Parameter text: Markdown 文本
+    /// - Returns: 预解析的 MarkdownContent
+    func parseMarkdownContent(_ text: String) -> MarkdownContent {
+        MarkdownContent(text)
     }
 }
 
-/// Markdown文件查看器组件
+/// Markdown 主题类型
+enum MarkdownTheme {
+    case basic
+    case gitHub
+    case vniverse
+}
+
+/// Markdown 文件查看器组件
 struct MarkdownFileViewer: View {
     let fileURL: URL
     

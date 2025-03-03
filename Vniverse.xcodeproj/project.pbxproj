@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D8E170422D74BF35008CB93F /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = D8E170412D74BF35008CB93F /* Markdown */; };
+		D826A81C2D75524000B38EF2 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = D826A81B2D75524000B38EF2 /* MarkdownUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D8E170422D74BF35008CB93F /* Markdown in Frameworks */,
+				D826A81C2D75524000B38EF2 /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = Vniverse;
 			packageProductDependencies = (
-				D8E170412D74BF35008CB93F /* Markdown */,
+				D826A81B2D75524000B38EF2 /* MarkdownUI */,
 			);
 			productName = Vniverse;
 			productReference = D8B3F3642D492827008547E4 /* Vniverse.app */;
@@ -101,7 +101,7 @@
 			mainGroup = D8B3F35B2D492827008547E4;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				D8E170402D74BF35008CB93F /* XCRemoteSwiftPackageReference "swift-markdown" */,
+				D826A81A2D75524000B38EF2 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D8B3F3652D492827008547E4 /* Products */;
@@ -336,21 +336,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		D8E170402D74BF35008CB93F /* XCRemoteSwiftPackageReference "swift-markdown" */ = {
+		D826A81A2D75524000B38EF2 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/swiftlang/swift-markdown";
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.5.0;
+				branch = main;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		D8E170412D74BF35008CB93F /* Markdown */ = {
+		D826A81B2D75524000B38EF2 /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = D8E170402D74BF35008CB93F /* XCRemoteSwiftPackageReference "swift-markdown" */;
-			productName = Markdown;
+			package = D826A81A2D75524000B38EF2 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
