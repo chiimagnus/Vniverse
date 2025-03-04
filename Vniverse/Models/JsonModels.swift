@@ -19,6 +19,7 @@ import SwiftUI
 struct Conversation: Identifiable {
     let id: String
     var messages: [Message]
+    var isFavorite: Bool = false  // 添加对话级别的收藏属性
 }
 
 struct Message: Identifiable {
