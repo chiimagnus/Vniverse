@@ -95,11 +95,18 @@ struct MessageBubbleView: View {
             // 使用HTMLParser解析和渲染HTML内容
             message.content.parseHTML()
                 .foregroundColor(message.role.textColor)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
+                .padding(.vertical, message.role == .user ? 12 : 8)
+                .padding(.horizontal, message.role == .user ? 16 : 12)
+                .frame(maxWidth: message.role == .user ? 300 : .infinity, alignment: .leading)
                 .background(
                     message.role.bubbleBackground
                         .cornerRadius(8)
+                )
+                .font(message.role == .user ? .body : .subheadline)
+                .shadow(color: message.role == .user ? .blue.opacity(0.2) : .clear, radius: 5, x: 0, y: 2)
+                .overlay(
+                    RoundedRectangle(cornerRadius: message.role == .user ? 16 : 8)
+                        .stroke(message.role == .user ? Color.blue.opacity(0.3) : Color.clear, lineWidth: 1)
                 )
         }
     }
