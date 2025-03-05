@@ -11,18 +11,50 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Document.timestamp, order: .reverse) private var documents: [Document]
+    @Query(sort: \Document.timestamp, order: .reverse) var documents: [Document]
     @State private var showingFilePicker = false
     @SceneStorage("selectedDocumentID") private var selectedDocumentID: String?
+    @State var selectedDocumentIDs: Set<String> = []
     
     // 支持的所有文件类型
     private var supportedTypes: [UTType] {
         DocumentType.allCases.flatMap { $0.contentTypes }
     }
     
+    // 批量收藏/取消收藏选中的文档
+    func toggleFavorite(for documents: [Document]) {
+        withAnimation {
+            // 检查是否所有文档都已收藏
+            let allFavorited = !documents.contains { !$0.isFavorite }
+            
+            // 如果全部已收藏，则取消收藏；否则，将未收藏的都收藏
+            for document in documents {
+                if allFavorited {
+                    // 全部已收藏，全部取消
+                    document.isFavorite = false
+                } else if !document.isFavorite {
+                    // 有未收藏的，只将未收藏的设为收藏
+                    document.isFavorite = true
+                }
+                // 已收藏的保持不变，除非所有都已收藏
+            }
+            saveDocumentsWithDebounce()
+        }
+    }
+    
+    // 批量删除文档
+    func deleteDocuments(_ documents: [Document]) {
+        withAnimation {
+            for document in documents {
+                deleteDocument(document)
+                selectedDocumentIDs.remove(document.id.uuidString)
+            }
+        }
+    }
+    
     var body: some View {
         NavigationSplitView {
-            List {
+            List(selection: $selectedDocumentIDs) {
                 // 收藏文档分类
                 Section(header: Label("收藏文档", systemImage: "star.fill").foregroundColor(.yellow)) {
                     ForEach(documents.filter { $0.isFavorite }) { document in
@@ -56,6 +88,7 @@ struct ContentView: View {
                                   documentLink: documentLink)
                 }
             }
+            .listStyle(.sidebar)
             .navigationDestination(for: String.self) { documentID in
                 DocumentContentView(documentID: documentID, documents: documents)
             }

@@ -37,18 +37,54 @@ extension ContentView {
             }
             .contextMenu {
                 Button(action: {
-                    document.isFavorite.toggle()
-                    // 不在扩展中直接保存，而是使用防抖动函数
-                    saveDocumentsWithDebounce()
+                    // 如果有多选，则对所有选中的文档操作
+                    if !selectedDocumentIDs.isEmpty {
+                        let docsToUpdate = selectedDocumentIDs.contains(document.id.uuidString) 
+                            ? documents.filter { selectedDocumentIDs.contains($0.id.uuidString) }
+                            : [document]
+                        toggleFavorite(for: docsToUpdate)
+                    } else {
+                        toggleFavorite(for: [document])
+                    }
                 }) {
+                    // 如果是多选且包含当前文档，则根据所有选中的文档状态决定显示文本
                     Label(
-                        document.isFavorite ? "取消收藏" : "收藏",
-                        systemImage: document.isFavorite ? "star.slash" : "star"
+                        {
+                            if selectedDocumentIDs.contains(document.id.uuidString) && selectedDocumentIDs.count > 1 {
+                                // 检查所有选中文档是否都已收藏
+                                let selectedDocs = documents.filter { selectedDocumentIDs.contains($0.id.uuidString) }
+                                let allFavorited = !selectedDocs.contains { !$0.isFavorite }
+                                return allFavorited ? "全部取消收藏" : "全部收藏"
+                            } else {
+                                return document.isFavorite ? "取消收藏" : "收藏"
+                            }
+                        }(),
+                        systemImage: {
+                            if selectedDocumentIDs.contains(document.id.uuidString) && selectedDocumentIDs.count > 1 {
+                                // 检查所有选中文档是否都已收藏
+                                let selectedDocs = documents.filter { selectedDocumentIDs.contains($0.id.uuidString) }
+                                let allFavorited = !selectedDocs.contains { !$0.isFavorite }
+                                return allFavorited ? "star.slash" : "star"
+                            } else {
+                                return document.isFavorite ? "star.slash" : "star"
+                            }
+                        }()
                     )
                 }
+                .keyboardShortcut("s", modifiers: [])
+                
+                Divider()
                 
                 Button(role: .destructive, action: {
-                    deleteDocument(document)
+                    // 如果有多选，则对所有选中的文档操作
+                    if !selectedDocumentIDs.isEmpty {
+                        let docsToDelete = selectedDocumentIDs.contains(document.id.uuidString)
+                            ? documents.filter { selectedDocumentIDs.contains($0.id.uuidString) }
+                            : [document]
+                        deleteDocuments(docsToDelete)
+                    } else {
+                        deleteDocuments([document])
+                    }
                 }) {
                     Label("删除", systemImage: "trash")
                 }
