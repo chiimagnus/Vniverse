@@ -212,20 +212,28 @@ struct ContentView: View {
             
             // 根据文件扩展名判断类型
             let ext = url.pathExtension.lowercased()
-//            let fileType: DocumentType = ext == "pdf" ? .pdf : ext == "json" ? .json : .text
             let fileType: DocumentType = switch ext {
                 case "pdf": .pdf
                 case "json": .json
                 default: .text
             }
             
-            let content: String
-            if fileType == .text {
-                content = try String(contentsOf: url)
-            } else if fileType == .json {
-                content = try String(contentsOf: url)
-            } else {
-                content = "" // PDF文件不需要读取内容
+            // 获取文件大小
+            let fileAttributes = try FileManager.default.attributesOfItem(atPath: sandboxURL.path)
+            let fileSize = fileAttributes[.size] as? Int ?? 0
+            
+            var content = ""
+            if fileType == .text || fileType == .json {
+                // 对于超过5MB的文件，仅加载前10KB作为预览
+                if fileSize > 5 * 1024 * 1024 {
+                    let fileHandle = try FileHandle(forReadingFrom: sandboxURL)
+                    let previewData = try fileHandle.read(upToCount: 10 * 1024) ?? Data()
+                    try fileHandle.close()
+                    content = String(data: previewData, encoding: .utf8) ?? ""
+                } else {
+                    // 对于较小的文件，完整加载
+                    content = try String(contentsOf: sandboxURL)
+                }
             }
             
             let document = Document(
@@ -238,7 +246,7 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 withAnimation {
                     modelContext.insert(document)
-                    print("✅ 成功插入文档：\(document.title)")
+                    print("✅ 成功插入文档：\(document.title)，大小：\(fileSize) 字节")
                 }
             }
         } catch {

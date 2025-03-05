@@ -51,8 +51,32 @@ enum DocumentType: Int, Codable, CaseIterable {
 final class Document: ObservableObject, Identifiable {
     var id: UUID
     var title: String
+    
+    // 内容属性改为仅存储摘要，不再存储完整内容
+    var contentPreview: String = ""  // 内容摘要，最多存储前1KB的内容
+    var contentSize: Int = 0  // 文件大小（字节）
+    
+    // 用于标记内容是否已加载到内存
+    @Transient
+    private var _contentLoaded = false
+    
+    // 内容改为临时属性，不存入数据库
+    @Transient
+    private var _content: String = ""
     var content: String {
-        didSet {
+        get {
+            if !_contentLoaded {
+                loadContentIfNeeded()
+            }
+            return _content
+        }
+        set {
+            _content = newValue
+            contentSize = newValue.utf8.count
+            // 存储内容摘要，最多1KB
+            let previewLength = min(1024, newValue.count)
+            contentPreview = String(newValue.prefix(previewLength))
+            _contentLoaded = true
             initializeParagraphs()
             objectWillChange.send()
         }
@@ -76,9 +100,9 @@ final class Document: ObservableObject, Identifiable {
     init(id: UUID = UUID(), title: String, content: String = "", fileName: String, fileType: DocumentType? = nil) {
         self.id = id
         self.title = title
-        self.content = content
         self.fileName = fileName
         self.timestamp = Date()
+        
         // 如果没有指定文件类型，根据文件扩展名判断
         if let specifiedType = fileType {
             self.fileType = specifiedType
@@ -92,14 +116,18 @@ final class Document: ObservableObject, Identifiable {
                 }
             }()
         }
-        initializeParagraphs()
-        print("📄 创建文档：\(title)")
+        
+        // 设置内容
+        self.content = content
         self.lastReadTimestamp = Date()
+        print("📄 创建文档：\(title)")
     }
     
     // 在从数据库加载后初始化
     func didAwakeFromFetch() {
-        initializeParagraphs()
+        // 记录内容未加载
+        _contentLoaded = false
+        
         // 确保文件类型与扩展名匹配
         let ext = (fileName as NSString).pathExtension.lowercased()
         if ext == "pdf" && fileType != .pdf {
@@ -123,11 +151,58 @@ final class Document: ObservableObject, Identifiable {
             .path
     }
     
+    // 按需加载内容
+    private func loadContentIfNeeded() {
+        // PDF文件不需要从文件加载内容
+        if fileType == .pdf {
+            _content = ""
+            _contentLoaded = true
+            return
+        }
+        
+        let filePath = sandboxPath
+        do {
+            // 仅当文件存在且内容尚未加载时才加载
+            if FileManager.default.fileExists(atPath: filePath) && !_contentLoaded {
+                if contentSize > 5 * 1024 * 1024 { // 大于5MB的文件
+                    // 对于大文件，仅加载前50KB作为预览
+                    let fileHandle = try FileHandle(forReadingFrom: URL(fileURLWithPath: filePath))
+                    let previewData = try fileHandle.read(upToCount: 50 * 1024) ?? Data()
+                    try fileHandle.close()
+                    _content = String(data: previewData, encoding: .utf8) ?? ""
+                    _content += "\n\n[文件过大，仅显示部分内容...]"
+                } else {
+                    // 对于小文件，完整加载
+                    _content = try String(contentsOfFile: filePath, encoding: .utf8)
+                }
+                _contentLoaded = true
+            } else if !_contentLoaded {
+                // 如果文件不存在但需要加载，返回预览内容
+                _content = contentPreview
+                _contentLoaded = true
+            }
+        } catch {
+            print("❌ 文件加载失败: \(error)")
+            _content = "加载失败: \(error.localizedDescription)"
+            _contentLoaded = true
+        }
+    }
+    
+    // 释放内容，减少内存占用
+    func unloadContent() {
+        if !_contentLoaded { return }
+        
+        // 保留内容预览
+        _content = ""
+        _contentLoaded = false
+        paragraphs = []
+    }
+    
     // 初始化段落
     private func initializeParagraphs() {
         // 只有文本文档才需要初始化段落
         if fileType == .text {
-            let rawParagraphs = content.components(separatedBy: "\n\n")
+            let rawParagraphs = _content.components(separatedBy: "\n\n")
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
             // 使用稳定的索引作为 id

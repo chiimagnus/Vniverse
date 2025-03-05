@@ -85,25 +85,81 @@ struct OffsetScrollView<Content: View>: NSViewRepresentable {
     }
 }
 
+// Markdown视图模型，负责处理Markdown内容的加载和渲染
+class MarkdownViewModel: ObservableObject {
+    @Published var renderedContent: AnyView = AnyView(EmptyView())
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    
+    // 缓存已渲染的内容，避免重复渲染
+    private var contentCache: [Int: AnyView] = [:]
+    
+    func loadContent(document: Document) {
+        // 检查缓存
+        let contentHash = document.content.hashValue
+        if let cachedView = contentCache[contentHash] {
+            self.renderedContent = cachedView
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        // 在后台线程处理Markdown渲染
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // 分段处理大型Markdown文档
+            let content = document.content
+            
+            DispatchQueue.main.async {
+                // 渲染Markdown内容
+                let markdownView = MarkdownService.shared.createMarkdownView(from: content)
+                let wrappedView = AnyView(
+                    markdownView
+                        .padding(4)
+                )
+                
+                // 缓存渲染结果
+                self.contentCache[contentHash] = wrappedView
+                self.renderedContent = wrappedView
+                self.isLoading = false
+            }
+        }
+    }
+    
+    func cleanup() {
+        // 如果缓存过大，清理缓存
+        if contentCache.count > 5 {
+            contentCache.removeAll()
+        }
+    }
+}
+
 struct MarkdownReaderView: View {
     @ObservedObject var document: Document
     @StateObject private var audioController = AudioController()
+    @StateObject private var viewModel = MarkdownViewModel()
     @State private var showSettings = false
     @Environment(\.modelContext) private var modelContext
     @State private var scrollOffset: CGFloat = 0
     
     var body: some View {
-        OffsetScrollView(offset: $scrollOffset) {
-            LazyVStack(alignment: .leading, spacing: 8) {
-                MarkdownService.shared.createMarkdownView(from: document.content)
-                    .padding(4)
+        ZStack {
+            if viewModel.isLoading {
+                loadingView
+            } else {
+                OffsetScrollView(offset: $scrollOffset) {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        viewModel.renderedContent
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .onChange(of: scrollOffset) { _, newValue in
             let positionString = String(format: "%.1f", newValue)
-            // print("保存滚动位置：\(positionString)")
             document.saveReadingPosition(positionString)
             try? modelContext.save()
         }
@@ -114,12 +170,10 @@ struct MarkdownReaderView: View {
             }
         }
         .onAppear {
-            print("视图出现，文档标题：\(document.title)")
-            print("上次阅读位置：\(document.lastReadPosition ?? "无")")
+            viewModel.loadContent(document: document)
             
             if let lastPosition = document.lastReadPosition,
                let offset = Double(lastPosition) {
-                print("尝试恢复到位置：\(offset)")
                 // 延迟设置初始滚动位置
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     scrollOffset = CGFloat(offset)
@@ -129,9 +183,22 @@ struct MarkdownReaderView: View {
         .onDisappear {
             audioController.stop()
             let positionString = String(format: "%.1f", scrollOffset)
-            print("视图消失，保存最终位置：\(positionString)")
             document.saveReadingPosition(positionString)
+            document.unloadContent()
+            viewModel.cleanup()
             try? modelContext.save()
+        }
+    }
+    
+    // 加载中视图
+    private var loadingView: some View {
+        VStack {
+            ProgressView()
+                .controlSize(.large)
+            Text("渲染Markdown内容...")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 8)
         }
     }
     
