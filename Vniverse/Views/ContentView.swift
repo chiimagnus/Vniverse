@@ -39,41 +39,25 @@ struct ContentView: View {
                 
                 // 按文件类型分组显示文档
                 Section(header: Label("Markdown文档", systemImage: "doc.text")) {
-                    ForEach(documents.filter { $0.fileType == .text }) { document in
-                        documentLink(for: document)
-                    }
+                    DocumentListView(documents: documents.filter { $0.fileType == .text },
+                                  selectedDocumentID: $selectedDocumentID,
+                                  documentLink: documentLink)
                 }
                 
                 Section(header: Label("PDF文档", systemImage: "doc.viewfinder")) {
-                    ForEach(documents.filter { $0.fileType == .pdf }) { document in
-                        documentLink(for: document)
-                    }
+                    DocumentListView(documents: documents.filter { $0.fileType == .pdf },
+                                  selectedDocumentID: $selectedDocumentID,
+                                  documentLink: documentLink)
                 }
                 
                 Section(header: Label("JSON文档", systemImage: "curlybraces")) {
-                    ForEach(documents.filter { $0.fileType == .json }) { document in
-                        documentLink(for: document)
-                    }
+                    DocumentListView(documents: documents.filter { $0.fileType == .json },
+                                  selectedDocumentID: $selectedDocumentID,
+                                  documentLink: documentLink)
                 }
             }
             .navigationDestination(for: String.self) { documentID in
-                Group {
-                    if let document = documents.first(where: { $0.id.uuidString == documentID }) {
-                        switch document.fileType {
-                        case .text:
-                            MarkdownReaderView(document: document)
-                                .id(document.id)
-                        case .pdf:
-                            PDFReaderView(document: document)
-                                .id(document.id)
-                        case .json:
-                            JsonReaderView(document: document)
-                                .id(document.id)
-                        }
-                    } else {
-                        ContentUnavailableView("文档已删除", systemImage: "trash")
-                    }
-                }
+                DocumentContentView(documentID: documentID, documents: documents)
             }
             .navigationTitle("文档")
             .navigationSplitViewColumnWidth(
@@ -117,11 +101,23 @@ struct ContentView: View {
         .onDisappear {
             removeNotificationObserver()
         }
-        // 监听文档变化并自动保存
-        .onChange(of: documents) { oldDocuments, newDocuments in
+        // 优化：限制文档变化监听频率，提高性能
+        .onChange(of: documents) { _, _ in
+            // 使用防抖动延迟保存，避免频繁保存
+            saveDocumentsWithDebounce()
+        }
+    }
+    
+    // 防抖动保存，避免频繁IO操作
+    @State private var saveTask: Task<Void, Never>?
+    func saveDocumentsWithDebounce() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor in
             do {
-                try modelContext.save()
-                print("✅ 文档状态已自动保存")
+                try await Task.sleep(nanoseconds: 500_000_000) // 0.5秒延迟
+                if !Task.isCancelled {
+                    try modelContext.save()
+                }
             } catch {
                 print("❌ 文档状态保存失败: \(error)")
             }
@@ -277,6 +273,45 @@ struct ContentView: View {
         
         try fileManager.copyItem(at: url, to: targetURL)
         return targetURL
+    }
+}
+
+// 优化文档列表性能的专用视图组件
+struct DocumentListView: View {
+    let documents: [Document]
+    @Binding var selectedDocumentID: String?
+    let documentLink: (Document) -> any View
+    
+    var body: some View {
+        ForEach(documents) { document in
+            AnyView(documentLink(document))
+        }
+    }
+}
+
+// 优化文档内容加载的专用视图组件
+struct DocumentContentView: View {
+    let documentID: String
+    let documents: [Document]
+    
+    var body: some View {
+        Group {
+            if let document = documents.first(where: { $0.id.uuidString == documentID }) {
+                switch document.fileType {
+                case .text:
+                    MarkdownReaderView(document: document)
+                        .id(document.id)
+                case .pdf:
+                    PDFReaderView(document: document)
+                        .id(document.id)
+                case .json:
+                    JsonReaderView(document: document)
+                        .id(document.id)
+                }
+            } else {
+                ContentUnavailableView("文档已删除", systemImage: "trash")
+            }
+        }
     }
 }
 

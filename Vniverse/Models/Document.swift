@@ -77,7 +77,7 @@ final class Document: ObservableObject, Identifiable {
             let previewLength = min(1024, newValue.count)
             contentPreview = String(newValue.prefix(previewLength))
             _contentLoaded = true
-            initializeParagraphs()
+            // 仅在需要时初始化段落，延迟初始化
             objectWillChange.send()
         }
     }
@@ -85,6 +85,10 @@ final class Document: ObservableObject, Identifiable {
     // SwiftData暂不支持存储复杂类型数组，改为临时计算属性
     @Transient
     private(set) var paragraphs: [DocumentParagraph] = []
+    
+    // 标记段落是否已初始化
+    @Transient
+    private var _paragraphsInitialized: Bool = false
     
     var fileName: String  // 只需要存储文件名
     var timestamp: Date
@@ -127,6 +131,7 @@ final class Document: ObservableObject, Identifiable {
     func didAwakeFromFetch() {
         // 记录内容未加载
         _contentLoaded = false
+        _paragraphsInitialized = false
         
         // 确保文件类型与扩展名匹配
         let ext = (fileName as NSString).pathExtension.lowercased()
@@ -196,12 +201,25 @@ final class Document: ObservableObject, Identifiable {
         _content = ""
         _contentLoaded = false
         paragraphs = []
+        _paragraphsInitialized = false
+    }
+    
+    // 懒加载初始化段落
+    func getParagraphs() -> [DocumentParagraph] {
+        if !_paragraphsInitialized {
+            initializeParagraphs()
+        }
+        return paragraphs
     }
     
     // 初始化段落
     private func initializeParagraphs() {
         // 只有文本文档才需要初始化段落
         if fileType == .text {
+            if !_contentLoaded {
+                loadContentIfNeeded()
+            }
+            
             let rawParagraphs = _content.components(separatedBy: "\n\n")
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
@@ -212,6 +230,7 @@ final class Document: ObservableObject, Identifiable {
         } else {
             paragraphs = []
         }
+        _paragraphsInitialized = true
     }
     
     // 新增位置保存方法
