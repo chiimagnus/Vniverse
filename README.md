@@ -6,15 +6,10 @@
     <a>中文</a> | <a href="README.en.md">English</a>
 </div>
 
-<div style="background: #fff3e0; padding: 20px; border-radius: 5px; border: 1px solid #ffcc80; margin: 20px 0;">
-    <h3 style="color: #e65100;">重要通知：项目归档</h3>
-    <p>本项目将停止开发并归档。以下是详细信息：</p>
-    <ul>
-        <li><strong>原项目功能：</strong>Vniverse是一个macOS平台的PDF、Markdown和AI聊天记录管理软件，具有自然语音朗读功能</li>
-        <li><strong>建议替代方案：</strong>我们建议用户直接使用Zotero等现有工具，并考虑为其开发语音朗读插件</li>
-        <li><strong>项目定位：</strong>本项目的定位是作为数据的临时存储，最终数据应转移到Obsidian、Logseq或Notion等专业笔记管理工具中</li>
-    </ul>
-</div>
+<!--idoc:ignore:start-->
+> [!TIP]
+> 声明：此项目并非开源项目，仓库作为官方网站，用于收集问题和用户需求。这样做是为了节省成本，因为没有官网，应用无法通过审核。
+<!--idoc:ignore:end-->
 
 Vniverse是一款macOS平台的pdf、markdown、AI 聊天保存软件，并且能够自然语音朗读文本。
 
