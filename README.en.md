@@ -1,3 +1,11 @@
+> [!TIP]
+> ⚠️ Important Notice: This project will be discontinued. Here are the reasons:
+> - I realized that it would be better to directly crawl entire pages, like Zotero does, and then implement a clipping feature similar to Evernote. I shouldn't have done unnecessary work; it would have been better to just use Zotero 😂. It would be best to develop a voice narration plugin for Zotero directly.
+> - Additionally, I actually don't need voice narration on macOS as much as I need it on iOS.
+> - What I want to achieve is definitely not to implement a complete note management system.
+> - What I should be doing is temporary data storage, which can later be transferred to professional note management tools like Obsidian, Logseq, or Notion!
+
+
 # Vniverse
 
 <div align="center">
